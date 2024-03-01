@@ -46,7 +46,7 @@ export const icon = pgEnum('icon', [
   'clipboardIcon',
 ]);
 
-const role = pgEnum('role', [
+export const role = pgEnum('role', [
   'agency-owner',
   'agency-admin',
   'subaccount-user',
@@ -58,11 +58,11 @@ const timeStamps = {
   updatedAt: timestamp('updated_at').defaultNow(),
 };
 
-const userTable = pgTable('user', {
+export const userTable = pgTable('user', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
   avatarUrl: varchar('avatar_url', { length: 256 }),
-  email: varchar('email', { length: 256 }).notNull(),
+  email: varchar('email', { length: 256 }).notNull().unique(),
   role: role('role').default('subaccount-user').notNull(),
   agencyId: uuid('agency_id')
     .references(() => agencyTable.id, {
@@ -82,16 +82,11 @@ export const userTableRelation = relations(userTable, ({ one, many }) => ({
   notifications: many(notificationTable),
 }));
 
-const permissionTable = pgTable(
+export const permissionTable = pgTable(
   'permission',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    email: varchar('email', { length: 256 })
-      .references(() => userTable.email, {
-        onDelete: 'cascade',
-      })
-      .notNull(),
-
+    email: varchar('email', { length: 256 }).notNull(),
     subAccountId: uuid('sub_account_id')
       .references(() => subaccountTable.id, { onDelete: 'cascade' })
       .notNull(),
@@ -105,10 +100,6 @@ const permissionTable = pgTable(
 export const permissionTableRelation = relations(
   permissionTable,
   ({ one }) => ({
-    user: one(userTable, {
-      fields: [permissionTable.email],
-      references: [userTable.email],
-    }),
     subaccount: one(subaccountTable, {
       fields: [permissionTable.subAccountId],
       references: [subaccountTable.id],
@@ -116,7 +107,7 @@ export const permissionTableRelation = relations(
   })
 );
 
-const agencyTable = pgTable('agency', {
+export const agencyTable = pgTable('agency', {
   id: uuid('id').primaryKey().defaultRandom(),
   connectedAccountId: text('connected_account_id'),
   customerId: text('customer_id').notNull(),
@@ -147,7 +138,7 @@ export const agencyTableRelation = relations(agencyTable, ({ many, one }) => ({
   addOns: many(addOnsTable),
 }));
 
-const subaccountTable = pgTable('subaccount', {
+export const subaccountTable = pgTable('subaccount', {
   id: uuid('id').primaryKey().defaultRandom(),
   connectAccountId: text('connect_account_id'),
   name: varchar('name', { length: 256 }),
@@ -241,7 +232,7 @@ export const laneTableRelations = relations(laneTable, ({ one, many }) => ({
   tickets: many(ticketTable),
 }));
 
-export const ticketTable = pgTable('lane', {
+export const ticketTable = pgTable('ticket', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
   order: integer('order').default(0).notNull(),
@@ -345,7 +336,7 @@ export const automationInstanceTableRelation = relations(
 
 export const actionType = pgEnum('action_type', ['create-contact']);
 
-export const actionTable = pgTable('action_table', {
+export const actionTable = pgTable('action', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 257 }).notNull(),
   type: actionType('type').notNull(),
@@ -545,7 +536,7 @@ export const invitationTableRelation = relations(
   })
 );
 
-export const notificationTable = pgTable('notificationTable', {
+export const notificationTable = pgTable('notification', {
   id: uuid('id').primaryKey().defaultRandom(),
   message: text('message').notNull(),
   agencyId: uuid('agency_id')
@@ -623,5 +614,3 @@ export const addOnsTableRelation = relations(addOnsTable, ({ one }) => ({
     references: [agencyTable.id],
   }),
 }));
-
-export { role as agencyRole, userTable };
