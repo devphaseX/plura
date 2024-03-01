@@ -8,9 +8,9 @@ const EnvSchema = object({
   //   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: string(),
   //   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: string(),
 
-  //   NEXT_PUBLIC_URL: string(),
-  //   NEXT_PUBLIC_DOMAIN: string(),
-  //   NEXT_PUBLIC_SCHEME: string(),
+  NEXT_PUBLIC_URL: string(),
+  NEXT_PUBLIC_DOMAIN: string(),
+  NEXT_PUBLIC_SCHEME: string(),
 
   //   UPLOADTHING_SECRET: string(),
   //   UPLOADTHING_APP_ID: string(),
@@ -31,7 +31,7 @@ const EnvSchema = object({
   // # Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
   // # See the documentation for all the connection string options: https://pris.ly/d/connection-strings
 
-  DATABASE_URL: string().url(),
+  DATABASE_URL: string(),
   // PROD_DATABASE_URL=
   // LOCAL_DATABASE_URL=postgresql://buildthings:singse/plura?sslmode=require
   // # https://www.builder.io/c/docs/using-your-api-key

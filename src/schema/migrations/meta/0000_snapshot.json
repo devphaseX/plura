@@ -1,0 +1,24 @@
+{
+  "id": "2e602553-959b-46d5-8585-32ee428eb19b",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {},
+  "enums": {
+    "agency_role": {
+      "name": "agency_role",
+      "values": {
+        "agency-owner": "agency-owner",
+        "agency-admin": "agency-admin",
+        "subaccount-user": "subaccount-user",
+        "subaccount-guest": "subaccount-guest"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
