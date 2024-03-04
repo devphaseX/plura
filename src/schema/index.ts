@@ -60,6 +60,7 @@ const timeStamps = {
 
 export const userTable = pgTable('user', {
   id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
   name: varchar('name', { length: 256 }).notNull(),
   avatarUrl: varchar('avatar_url', { length: 256 }),
   email: varchar('email', { length: 256 }).notNull().unique(),
@@ -72,6 +73,7 @@ export const userTable = pgTable('user', {
   ...timeStamps,
 });
 
+export type UserTable = typeof userTable.$inferSelect;
 export const userTableRelation = relations(userTable, ({ one, many }) => ({
   agency: one(agencyTable, {
     fields: [userTable.agencyId],
@@ -103,6 +105,10 @@ export const permissionTableRelation = relations(
     subaccount: one(subaccountTable, {
       fields: [permissionTable.subAccountId],
       references: [subaccountTable.id],
+    }),
+    user: one(userTable, {
+      fields: [permissionTable.email],
+      references: [userTable.email],
     }),
   })
 );
@@ -159,9 +165,9 @@ export const subaccountTable = pgTable('subaccount', {
 export const subaccountTableRelation = relations(
   subaccountTable,
   ({ many, one }) => ({
-    agency: one(subaccountTable, {
+    agency: one(agencyTable, {
       fields: [subaccountTable.agencyId],
-      references: [subaccountTable.id],
+      references: [agencyTable.id],
     }),
     sidebarOptions: many(subAccountSidebarOptionTable),
     permissions: many(permissionTable),
@@ -502,9 +508,9 @@ export const subAccountSidebarOptionTable = pgTable(
 export const subAccountSidebarOptionTableRelation = relations(
   subAccountSidebarOptionTable,
   ({ one }) => ({
-    subaccount: one(agencyTable, {
+    subaccount: one(subaccountTable, {
       fields: [subAccountSidebarOptionTable.subaccountId],
-      references: [agencyTable.id],
+      references: [subaccountTable.id],
     }),
   })
 );
@@ -542,9 +548,9 @@ export const notificationTable = pgTable('notification', {
   agencyId: uuid('agency_id')
     .references(() => agencyTable.id, { onDelete: 'cascade' })
     .notNull(),
-  subaccountId: uuid('subaccount_id')
-    .references(() => subaccountTable.id, { onDelete: 'cascade' })
-    .notNull(),
+  subaccountId: uuid('subaccount_id').references(() => subaccountTable.id, {
+    onDelete: 'cascade',
+  }),
   userId: uuid('user_id')
     .references(() => userTable.id, { onDelete: 'cascade' })
     .notNull(),

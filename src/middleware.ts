@@ -2,6 +2,7 @@ import { Search } from 'lucide-react';
 import { authMiddleware } from '@clerk/nextjs';
 import { env } from './lib/env';
 import { NextResponse } from 'next/server';
+import { authPageRoute } from '../routes';
 
 export default authMiddleware({
   publicRoutes: ['/site', '/api/uploadthing'],
@@ -10,6 +11,7 @@ export default authMiddleware({
     const url = req.nextUrl;
     const searchParams = url.searchParams.toString();
     const headers = req.headers;
+    const loggedIn = !!auth.user;
 
     const pathWithSearchParams = `${url.pathname}${
       searchParams ? `?${searchParams}` : ''
@@ -43,6 +45,9 @@ export default authMiddleware({
       url.pathname.startsWith('/agency') ||
       url.pathname.startsWith('/subaccount')
     ) {
+      if (authPageRoute.includes(url.pathname) && loggedIn) {
+        return NextResponse.redirect('/agency');
+      }
       return;
     }
   },
