@@ -16,7 +16,7 @@ export const deleteAgencyAction = serverAction(
   async ({ id }) => {
     try {
       const user = await getUserDetails();
-      if (!user || id !== user.agency.id) throw new Error('Unauthorized');
+      if (!user || id !== user.agency?.id) throw new Error('Unauthorized');
       const [removeAgencyProfile] = await db
         .delete(agencyTable)
         .where(sql`${agencyTable.id} = ${id}`)

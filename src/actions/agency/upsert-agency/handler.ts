@@ -1,46 +1,29 @@
 'use server';
 
-import { TypeOf, union, z } from 'zod';
-import { CreateAgencyFormSchema } from './create-agency';
 import { serverAction } from '@/lib/server-action';
 import { db } from '@/lib/db';
-import { AgencyTable, agencyTable, agencySidebarOptionTable } from '@/schema';
-import { eq, sql } from 'drizzle-orm';
+import {
+  AgencyTable,
+  agencyTable,
+  agencySidebarOptionTable,
+  subaccountTable,
+} from '@/schema';
+import { sql } from 'drizzle-orm';
 import { getUserDetails, updateUser } from '@/lib/queries';
-import { createStripeCustomer } from '@/lib/create-stripe-customer';
+import { upsertAgencySchema } from './input';
+import { createStripeCustomer } from '@/actions/stripe/handler';
+import { currentUser } from '@clerk/nextjs';
 
-export const upsertAgencySchema = z.union([
-  z.object({
-    type: z.enum(['update']),
-    data: CreateAgencyFormSchema.partial({
-      name: true,
-      address: true,
-      agencyLogo: true,
-      city: true,
-      companyPhone: true,
-      state: true,
-      country: true,
-      zipCode: true,
-      goal: true,
-      customerId: true,
-      whiteLabel: true,
-      connectedAccountId: true,
-    }),
-  }),
-
-  z.object({ type: z.enum(['create']), data: CreateAgencyFormSchema }),
-]);
-
-export type UpsertAgencyInput = TypeOf<typeof upsertAgencySchema>;
 export const upsertAgencyAction = serverAction(
   upsertAgencySchema,
   async (formData) => {
     try {
-      const taskCreateRequest =
-        formData.type === 'create' && !('agencyId' in formData);
-      const userDetails = await getUserDetails();
+      const taskCreateRequest = formData.type === 'create';
+      const authUser = await currentUser();
+      let userDetails = await getUserDetails();
       let customerId: string;
 
+      debugger;
       if (taskCreateRequest || !userDetails?.agency?.customerId) {
         const { data } = formData as { data: AgencyTable };
 
@@ -71,9 +54,15 @@ export const upsertAgencyAction = serverAction(
         }
 
         customerId = payload.customerId;
+        if (taskCreateRequest) {
+          await updateUser({
+            role: 'agency-owner',
+          });
+          userDetails = await getUserDetails();
+        }
       }
 
-      if (!userDetails) throw new Error('Unauthorized');
+      if (!authUser) throw new Error('Unauthorized');
       const updatedAgency = await db.transaction(async () => {
         const [updatedAgency] = await db
           .insert(agencyTable)
@@ -84,9 +73,13 @@ export const upsertAgencyAction = serverAction(
           .onConflictDoUpdate({
             target: agencyTable.companyEmail,
             set: formData.data,
-            where: sql`${agencyTable.id} = ${userDetails.agencyId}`,
+            where: sql`${agencyTable.companyEmail} = ${formData.data.companyEmail}`,
           })
           .returning();
+
+        if (!updatedAgency) {
+          throw new Error('Agency not found');
+        }
 
         const sidebarOptions = [
           {

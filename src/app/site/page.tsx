@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { pricingCards } from '@/lib/constants';
+import { currentUser } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { Check } from 'lucide-react';
 import Image from 'next/image';

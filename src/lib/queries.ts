@@ -15,8 +15,9 @@ import { redirect } from 'next/navigation';
 
 export const getUserDetails = async () => {
   const user = await currentUser();
+
   if (!user) {
-    return;
+    throw new Error('Unauthorized');
   }
 
   const userData = await db.query.userTable.findFirst({

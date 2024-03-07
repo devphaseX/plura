@@ -11,12 +11,6 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "icon_type" AS ENUM('info');
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
  CREATE TYPE "invitation_status" AS ENUM('accepted', 'revoked', 'pending');
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -63,7 +57,7 @@ CREATE TABLE IF NOT EXISTS "agency_sidebar_option" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(256) NOT NULL,
 	"content" text DEFAULT '#',
-	"icon" "icon_type" DEFAULT 'info' NOT NULL,
+	"icon" "icon" DEFAULT 'info' NOT NULL,
 	"agency_id" uuid,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
@@ -85,7 +79,8 @@ CREATE TABLE IF NOT EXISTS "agency" (
 	"country" varchar(256) NOT NULL,
 	"goal" integer DEFAULT 5 NOT NULL,
 	"created_at" timestamp DEFAULT now(),
-	"updated_at" timestamp DEFAULT now()
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "agency_company_email_unique" UNIQUE("company_email")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "automation_instance" (
@@ -151,12 +146,12 @@ CREATE TABLE IF NOT EXISTS "funnel" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "subaccount_sidebar_option" (
+CREATE TABLE IF NOT EXISTS "invitation" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(256) NOT NULL,
-	"content" text DEFAULT '#',
-	"icon" "icon_type" DEFAULT 'info' NOT NULL,
-	"subaccount_id" uuid,
+	"status" "invitation_status" DEFAULT 'pending' NOT NULL,
+	"role" "role" DEFAULT 'subaccount-user' NOT NULL,
+	"agency_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -186,7 +181,7 @@ CREATE TABLE IF NOT EXISTS "notification" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"message" text NOT NULL,
 	"agency_id" uuid NOT NULL,
-	"subaccount_id" uuid NOT NULL,
+	"subaccount_id" uuid,
 	"user_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
@@ -203,6 +198,16 @@ CREATE TABLE IF NOT EXISTS "pipeline" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(256) NOT NULL,
 	"subaccount_id" uuid NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "subaccount_sidebar_option" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(256) NOT NULL,
+	"content" text DEFAULT '#',
+	"icon" "icon" DEFAULT 'info' NOT NULL,
+	"subaccount_id" uuid,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -267,11 +272,12 @@ CREATE TABLE IF NOT EXISTS "trigger" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
 	"name" varchar(256) NOT NULL,
 	"avatar_url" varchar(256),
 	"email" varchar(256) NOT NULL,
 	"role" "role" DEFAULT 'subaccount-user' NOT NULL,
-	"agency_id" uuid NOT NULL,
+	"agency_id" uuid,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
 	CONSTRAINT "user_email_unique" UNIQUE("email")
@@ -339,7 +345,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "subaccount_sidebar_option" ADD CONSTRAINT "subaccount_sidebar_option_subaccount_id_subaccount_id_fk" FOREIGN KEY ("subaccount_id") REFERENCES "subaccount"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "invitation" ADD CONSTRAINT "invitation_agency_id_agency_id_fk" FOREIGN KEY ("agency_id") REFERENCES "agency"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -382,6 +388,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "pipeline" ADD CONSTRAINT "pipeline_subaccount_id_subaccount_id_fk" FOREIGN KEY ("subaccount_id") REFERENCES "subaccount"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "subaccount_sidebar_option" ADD CONSTRAINT "subaccount_sidebar_option_subaccount_id_subaccount_id_fk" FOREIGN KEY ("subaccount_id") REFERENCES "subaccount"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

@@ -197,7 +197,7 @@ export const tagTableRelations = relations(tagTable, ({ one, many }) => ({
     fields: [tagTable.subAccountId],
     references: [subaccountTable.id],
   }),
-  tickets: many(ticketTable),
+  // tickets: many(ticketTable),
 }));
 
 export const pipelineTable = pgTable('pipeline', {
@@ -257,7 +257,6 @@ export const ticketTable = pgTable('ticket', {
 });
 
 export const ticketTableRelations = relations(ticketTable, ({ one, many }) => ({
-  tags: many(tagTable),
   lane: one(laneTable, {
     fields: [ticketTable.laneId],
     references: [laneTable.id],
@@ -284,13 +283,16 @@ export const triggerTable = pgTable('trigger', {
   ...timeStamps,
 });
 
-export const triggerTableRelations = relations(tagTable, ({ one, many }) => ({
-  subaccount: one(subaccountTable, {
-    fields: [tagTable.subAccountId],
-    references: [subaccountTable.id],
-  }),
-  automations: many(automationTable),
-}));
+export const triggerTableRelations = relations(
+  triggerTable,
+  ({ one, many }) => ({
+    subaccount: one(subaccountTable, {
+      fields: [triggerTable.subAccountId],
+      references: [subaccountTable.id],
+    }),
+    automations: many(automationTable),
+  })
+);
 
 export const automationTable = pgTable('automation', {
   id: uuid('id').primaryKey().defaultRandom(),

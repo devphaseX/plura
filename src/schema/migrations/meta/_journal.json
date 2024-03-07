@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1709314834495,
-      "tag": "0000_smooth_rafael_vega",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1709546404033,
-      "tag": "0001_silent_jazinda",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1709547597741,
-      "tag": "0002_elite_tattoo",
+      "when": 1709814323165,
+      "tag": "0000_careful_hitman",
       "breakpoints": true
     }
   ]

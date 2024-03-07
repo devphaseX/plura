@@ -29,10 +29,6 @@ import {
 import { NumberInput } from '@tremor/react';
 
 import {
-  CreateAgencyFormData,
-  CreateAgencyFormSchema,
-} from '@/actions/agency/create-agency';
-import {
   Form,
   FormField,
   FormControl,
@@ -44,11 +40,14 @@ import {
 import { FileUpload } from '../global/file-upload';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
-import { upsertAgencyAction } from '@/actions/agency/update-agency';
 import { createActivityLogNotification } from '@/lib/queries';
 import { Button } from '../ui/button';
 import { deleteAgencyAction } from '@/actions/agency/delete-agency';
-
+import {
+  CreateAgencyFormData,
+  CreateAgencyFormSchema,
+} from '@/actions/agency/upsert-agency/input';
+import { upsertAgencyAction } from '@/actions/agency/upsert-agency/handler';
 type AgencyDetailsProps = {
   data?: Partial<AgencyTable>;
 };
@@ -114,7 +113,7 @@ const AgencyDetails = ({ data }: AgencyDetailsProps) => {
   );
 
   const handleSubmit = form.handleSubmit((formData) => {
-    upsertAgency({ type: data ? 'update' : 'create', data: formData });
+    upsertAgency({ type: data?.id ? 'update' : 'create', data: formData });
   });
 
   const submittingAgencyForm = upsertAgencyStatus === 'executing';
@@ -129,6 +128,7 @@ const AgencyDetails = ({ data }: AgencyDetailsProps) => {
     }
   }, [data]);
 
+  console.log({ error: form.formState.errors });
   return (
     <AlertDialog>
       <Card className="w-full">

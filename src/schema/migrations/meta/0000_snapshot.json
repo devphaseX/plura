@@ -1,5 +1,5 @@
 {
-  "id": "de61f30e-ee03-4cca-b48b-d0e61aae8d13",
+  "id": "b7edbfe1-e326-48b1-87a7-85b45b582665",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -162,7 +162,7 @@
         },
         "icon": {
           "name": "icon",
-          "type": "icon_type",
+          "type": "icon",
           "primaryKey": false,
           "notNull": true,
           "default": "'info'"
@@ -316,7 +316,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "agency_company_email_unique": {
+          "name": "agency_company_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "company_email"
+          ]
+        }
+      }
     },
     "automation_instance": {
       "name": "automation_instance",
@@ -768,8 +776,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "subaccount_sidebar_option": {
-      "name": "subaccount_sidebar_option",
+    "invitation": {
+      "name": "invitation",
       "schema": "",
       "columns": {
         "id": {
@@ -785,25 +793,25 @@
           "primaryKey": false,
           "notNull": true
         },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'#'"
-        },
-        "icon": {
-          "name": "icon",
-          "type": "icon_type",
+        "status": {
+          "name": "status",
+          "type": "invitation_status",
           "primaryKey": false,
           "notNull": true,
-          "default": "'info'"
+          "default": "'pending'"
         },
-        "subaccount_id": {
-          "name": "subaccount_id",
+        "role": {
+          "name": "role",
+          "type": "role",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'subaccount-user'"
+        },
+        "agency_id": {
+          "name": "agency_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -822,12 +830,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "subaccount_sidebar_option_subaccount_id_subaccount_id_fk": {
-          "name": "subaccount_sidebar_option_subaccount_id_subaccount_id_fk",
-          "tableFrom": "subaccount_sidebar_option",
-          "tableTo": "subaccount",
+        "invitation_agency_id_agency_id_fk": {
+          "name": "invitation_agency_id_agency_id_fk",
+          "tableFrom": "invitation",
+          "tableTo": "agency",
           "columnsFrom": [
-            "subaccount_id"
+            "agency_id"
           ],
           "columnsTo": [
             "id"
@@ -1013,7 +1021,7 @@
           "name": "subaccount_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -1181,6 +1189,77 @@
         "pipeline_subaccount_id_subaccount_id_fk": {
           "name": "pipeline_subaccount_id_subaccount_id_fk",
           "tableFrom": "pipeline",
+          "tableTo": "subaccount",
+          "columnsFrom": [
+            "subaccount_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "subaccount_sidebar_option": {
+      "name": "subaccount_sidebar_option",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'#'"
+        },
+        "icon": {
+          "name": "icon",
+          "type": "icon",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'info'"
+        },
+        "subaccount_id": {
+          "name": "subaccount_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "subaccount_sidebar_option_subaccount_id_subaccount_id_fk": {
+          "name": "subaccount_sidebar_option_subaccount_id_subaccount_id_fk",
+          "tableFrom": "subaccount_sidebar_option",
           "tableTo": "subaccount",
           "columnsFrom": [
             "subaccount_id"
@@ -1623,6 +1702,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "name": {
           "name": "name",
           "type": "varchar(256)",
@@ -1652,7 +1737,7 @@
           "name": "agency_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1737,12 +1822,6 @@
         "category": "category",
         "contact": "contact",
         "clipboardIcon": "clipboardIcon"
-      }
-    },
-    "icon_type": {
-      "name": "icon_type",
-      "values": {
-        "info": "info"
       }
     },
     "invitation_status": {

@@ -1,19 +1,20 @@
 import { AgencyDetails } from '@/components/forms/agency-details';
 import { getUserDetails, verifyAndAcceptInvitation } from '@/lib/queries';
-import { AgencyPageParams } from '@/lib/validations/params';
+import {
+  AgencyPageQueries,
+  AgencyPageQueriesSchema,
+} from '@/lib/validations/queries';
 import { currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
-import { z } from 'zod';
 
 const AgencyPage = async ({
   searchParams,
 }: {
-  searchParams: AgencyPageParams;
+  searchParams: AgencyPageQueries;
 }) => {
-  searchParams = AgencyPageParams.parse(searchParams);
+  searchParams = AgencyPageQueriesSchema.parse(searchParams);
   const agencyId = await verifyAndAcceptInvitation();
   const user = await getUserDetails();
-
   if (agencyId) {
     if (user?.role === 'subaccount-user' || user?.role === 'subaccount-guest') {
       return redirect('/subaccount');
