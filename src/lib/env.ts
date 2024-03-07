@@ -15,8 +15,8 @@ const EnvSchema = object({
   //   UPLOADTHING_SECRET: string(),
   //   UPLOADTHING_APP_ID: string(),
 
-  //   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: string(),
-  //   STRIPE_SECRET_KEY: string(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: string(),
+  STRIPE_SECRET_KEY: string(),
   //   STRIPE_WEBHOOK_SECRET: string(),
   //   NEXT_PUBLIC_STRIPE_CLIENT_ID: string(),
   //   NEXT_PUBLIC_PLATFORM_SUBSCRIPTION_PERCENT: number(),

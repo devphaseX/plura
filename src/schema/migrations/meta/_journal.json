@@ -15,6 +15,13 @@
       "when": 1709546404033,
       "tag": "0001_silent_jazinda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1709547597741,
+      "tag": "0002_elite_tattoo",
+      "breakpoints": true
     }
   ]
 }

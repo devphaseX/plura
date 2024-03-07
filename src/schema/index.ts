@@ -65,11 +65,9 @@ export const userTable = pgTable('user', {
   avatarUrl: varchar('avatar_url', { length: 256 }),
   email: varchar('email', { length: 256 }).notNull().unique(),
   role: role('role').default('subaccount-user').notNull(),
-  agencyId: uuid('agency_id')
-    .references(() => agencyTable.id, {
-      onDelete: 'cascade',
-    })
-    .notNull(),
+  agencyId: uuid('agency_id').references(() => agencyTable.id, {
+    onDelete: 'cascade',
+  }),
   ...timeStamps,
 });
 
@@ -119,7 +117,7 @@ export const agencyTable = pgTable('agency', {
   customerId: text('customer_id').notNull(),
   name: varchar('name', { length: 256 }).notNull(),
   agencyLogo: varchar('agency_logo', { length: 256 }).notNull(),
-  companyEmail: varchar('company_email', { length: 256 }).notNull(),
+  companyEmail: varchar('company_email', { length: 256 }).notNull().unique(),
   companyPhone: varchar('company_phone', { length: 256 }),
   whiteLabel: boolean('white_label').default(true).notNull(),
   address: varchar('address', { length: 256 }).notNull(),
@@ -130,6 +128,8 @@ export const agencyTable = pgTable('agency', {
   goal: integer('goal').default(5).notNull(),
   ...timeStamps,
 });
+
+export type AgencyTable = typeof agencyTable.$inferSelect;
 
 export const agencyTableRelation = relations(agencyTable, ({ many, one }) => ({
   users: many(userTable),
@@ -468,13 +468,11 @@ export const funnelPageTableRelation = relations(
   })
 );
 
-export const iconType = pgEnum('icon_type', ['info']);
-
 export const agencySidebarOptionTable = pgTable('agency_sidebar_option', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
   link: text('content').default('#'),
-  icon: iconType('icon').default('info').notNull(),
+  icon: icon('icon').default('info').notNull(),
   agencyId: uuid('agency_id').references(() => agencyTable.id, {
     onDelete: 'cascade',
   }),
@@ -497,7 +495,7 @@ export const subAccountSidebarOptionTable = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 256 }).notNull(),
     link: text('content').default('#'),
-    icon: iconType('icon').default('info').notNull(),
+    icon: icon('icon').default('info').notNull(),
     subaccountId: uuid('subaccount_id').references(() => subaccountTable.id, {
       onDelete: 'cascade',
     }),
@@ -521,7 +519,7 @@ export const invitationStatus = pgEnum('invitation_status', [
   'pending',
 ]);
 
-export const invitationTable = pgTable('subaccount_sidebar_option', {
+export const invitationTable = pgTable('invitation', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('name', { length: 256 }).notNull(),
   status: invitationStatus('status').default('pending').notNull(),

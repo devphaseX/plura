@@ -44,64 +44,64 @@ export const verifyAndAcceptInvitation = async () => {
   const user = await currentUser();
   if (!user) return redirect('/sign-in');
 
-  // const [invite] = await db
-  //   .select({
-  //     ...getTableColumns(invitationTable),
-  //     alreadyJoined: sql<boolean>`case
-  //                                   when ${userTable.userId} is not null  then true
-  //                                   else false
-  //                                 end
-  //                               `,
-  //   })
-  //   .from(invitationTable)
-  //   .leftJoin(userTable, eq(userTable.agencyId, invitationTable.agencyId))
-  //   .innerJoin(agencyTable, eq(agencyTable.id, invitationTable.agencyId))
-  //   .where(
-  //     sql`${invitationTable.status} = 'pending'
-  //     and ${invitationTable.email} = ${user.emailAddresses[0].emailAddress}`
-  //   );
+  const [invite] = await db
+    .select({
+      ...getTableColumns(invitationTable),
+      alreadyJoined: sql<boolean>`case
+                                    when ${userTable.userId} is not null  then true
+                                    else false
+                                  end
+                                `,
+    })
+    .from(invitationTable)
+    .leftJoin(userTable, eq(userTable.agencyId, invitationTable.agencyId))
+    .innerJoin(agencyTable, eq(agencyTable.id, invitationTable.agencyId))
+    .where(
+      sql`${invitationTable.status} = 'pending'
+      and ${invitationTable.email} = ${user.emailAddresses[0].emailAddress}`
+    );
 
-  // if (invite) {
-  //   if (invite.alreadyJoined) {
-  //     await db.delete(invitationTable).where(eq(invitationTable.id, invite.id));
-  //   } else {
-  //     // await db.transaction(async () => {
-  //     //   const joinedUser = await createTeamUser({
-  //     //     agencyId: invite.agencyId,
-  //     //     user: {
-  //     //       email: invite.email,
-  //     //       userId: user.id,
-  //     //       agencyId: invite.agencyId,
-  //     //       name: `${user.firstName} ${user.lastName}`,
-  //     //       avatarUrl: user.imageUrl,
-  //     //     },
-  //     //   });
-  //     //   await createActivityLogNotification({
-  //     //     agencyId: invite.agencyId,
-  //     //     description: 'Joined',
-  //     //   });
-  //     //   if (joinedUser) {
-  //     //     await clerkClient.users.updateUserMetadata(user.id, {
-  //     //       privateMetadata: {
-  //     //         role: joinedUser?.role ?? 'subaccount-user',
-  //     //       },
-  //     //     });
-  //     //     await db
-  //     //       .delete(invitationTable)
-  //     //       .where(eq(invitationTable.id, invite.id));
-  //     //     return joinedUser.agencyId;
-  //     //   }
-  //     //   return null;
-  //     // });
-  //   }
-  // }
-  // const [agency] = await db
-  //   .select({ ...getTableColumns(agencyTable) })
-  //   .from(agencyTable)
-  //   .innerJoin(userTable, eq(userTable.agencyId, agencyTable.id))
-  //   .where(eq(userTable.email, user.emailAddresses[0].emailAddress));
+  if (invite) {
+    if (invite.alreadyJoined) {
+      await db.delete(invitationTable).where(eq(invitationTable.id, invite.id));
+    } else {
+      await db.transaction(async () => {
+        const joinedUser = await createTeamUser({
+          agencyId: invite.agencyId,
+          user: {
+            email: invite.email,
+            userId: user.id,
+            agencyId: invite.agencyId,
+            name: `${user.firstName} ${user.lastName}`,
+            avatarUrl: user.imageUrl,
+          },
+        });
+        await createActivityLogNotification({
+          agencyId: invite.agencyId,
+          description: 'Joined',
+        });
+        if (joinedUser) {
+          await clerkClient.users.updateUserMetadata(user.id, {
+            privateMetadata: {
+              role: joinedUser?.role ?? 'subaccount-user',
+            },
+          });
+          await db
+            .delete(invitationTable)
+            .where(eq(invitationTable.id, invite.id));
+          return joinedUser.agencyId;
+        }
+        return null;
+      });
+    }
+  }
+  const [agency] = await db
+    .select({ ...getTableColumns(agencyTable) })
+    .from(agencyTable)
+    .innerJoin(userTable, eq(userTable.agencyId, agencyTable.id))
+    .where(eq(userTable.email, user.emailAddresses[0].emailAddress));
 
-  // return agency?.id ?? null;
+  return agency?.id ?? null;
 };
 
 type NewCreateUserFormData = Omit<
@@ -188,4 +188,53 @@ export const createActivityLogNotification = async (
     agencyId: userAssociatedAgencyId,
     ...(option.subaccountId && { subaccountId: option.subaccountId }),
   });
+};
+
+export const updateUser = async (
+  userFormData: Partial<UserTable> & { firstName?: string; lastName?: string }
+) => {
+  const user = await currentUser();
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  let {
+    firstName = user.firstName,
+    lastName = user.lastName,
+    role = (user as { role?: UserTable['role'] }).role ?? 'subaccount-user',
+    avatarUrl,
+  } = userFormData;
+
+  try {
+    const [updatedUser] = await db
+      .insert(userTable)
+      .values({
+        email: user.emailAddresses[0].emailAddress as string,
+        name: `${firstName} ${lastName}`,
+        userId: user.id,
+        role,
+        avatarUrl: avatarUrl ?? user.imageUrl,
+        agencyId: userFormData.agencyId ?? null,
+      })
+      .onConflictDoUpdate({
+        target: userTable.email,
+        set: {
+          name: sql<string>`coalesce(${
+            firstName && lastName ? `${firstName} ${lastName}` : null
+          }, ${userTable.name})`,
+          role: sql<string>`coalesce(${role ?? null}, ${userTable.role})`,
+          avatarUrl,
+          agencyId:
+            'agencyId' in userFormData
+              ? userFormData.agencyId
+              : sql<string>`${userTable.agencyId}`,
+        },
+        where: eq(userTable.email, user.emailAddresses[0].emailAddress),
+      });
+    return updatedUser;
+  } catch (e) {
+    console.error(e);
+    throw new Error('An error occurred while updating user record');
+  }
 };
