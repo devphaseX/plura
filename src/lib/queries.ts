@@ -4,7 +4,7 @@ import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from './db';
 import { eq, getTableColumns, sql } from 'drizzle-orm';
 import {
-  UserTable,
+  User,
   agencyTable,
   invitationTable,
   notificationTable,
@@ -12,6 +12,7 @@ import {
   userTable,
 } from '@/schema';
 import { redirect } from 'next/navigation';
+import { alias } from 'drizzle-orm/pg-core';
 
 export const getUserDetails = async () => {
   const user = await currentUser();
@@ -45,21 +46,28 @@ export const verifyAndAcceptInvitation = async () => {
   const user = await currentUser();
   if (!user) return redirect('/sign-in');
 
+  const accountInvite = alias(invitationTable, 'account_invite');
+
   const [invite] = await db
     .select({
-      ...getTableColumns(invitationTable),
+      ...getTableColumns(accountInvite),
       alreadyJoined: sql<boolean>`case
-                                    when ${userTable.userId} is not null  then true
+                                    when ${userTable.userId} is not null 
+                                    then ${accountInvite.agencyId} = ${userTable.agencyId} or 
+                                    exists (
+                                            select * from ${subaccountTable}
+                                            where ${accountInvite.agencyId} = ${subaccountTable.agencyId}
+                                            )
                                     else false
                                   end
                                 `,
     })
-    .from(invitationTable)
-    .leftJoin(userTable, eq(userTable.agencyId, invitationTable.agencyId))
-    .innerJoin(agencyTable, eq(agencyTable.id, invitationTable.agencyId))
+    .from(accountInvite)
+    .leftJoin(userTable, eq(userTable.agencyId, accountInvite.agencyId))
+    .innerJoin(agencyTable, eq(agencyTable.id, accountInvite.agencyId))
     .where(
-      sql`${invitationTable.status} = 'pending'
-      and ${invitationTable.email} = ${user.emailAddresses[0].emailAddress}`
+      sql`${accountInvite.status} = 'pending'
+      and ${accountInvite.email} = ${user.emailAddresses[0].emailAddress}`
     );
 
   if (invite) {
@@ -96,20 +104,19 @@ export const verifyAndAcceptInvitation = async () => {
       });
     }
   }
-  const [agency] = await db
-    .select({ ...getTableColumns(agencyTable) })
-    .from(agencyTable)
-    .innerJoin(userTable, eq(userTable.agencyId, agencyTable.id))
+  const [registeredUser] = await db
+    .select()
+    .from(userTable)
     .where(eq(userTable.email, user.emailAddresses[0].emailAddress));
 
-  return agency?.id ?? null;
+  return registeredUser?.agencyId ?? null;
 };
 
 type NewCreateUserFormData = Omit<
-  UserTable,
+  User,
   'id' | 'createdAt' | 'updatedAt' | 'role'
 > &
-  Pick<Partial<UserTable>, 'role'>;
+  Pick<Partial<User>, 'role'>;
 
 type CreateTeamUserOption = {
   agencyId: string;
@@ -148,6 +155,7 @@ export const createActivityLogNotification = async (
   }
         inner join ${userTable} on ${userTable.agencyId} = ${agencyTable.id}
         where ${subaccountTable.id} = ${option.subaccountId ?? null}
+        limit 1
         )
         union
         (
@@ -192,7 +200,7 @@ export const createActivityLogNotification = async (
 };
 
 export const updateUser = async (
-  userFormData: Partial<UserTable> & { firstName?: string; lastName?: string }
+  userFormData: Partial<User> & { firstName?: string; lastName?: string }
 ) => {
   const user = await currentUser();
 
@@ -203,7 +211,7 @@ export const updateUser = async (
   let {
     firstName = user.firstName,
     lastName = user.lastName,
-    role = (user as { role?: UserTable['role'] }).role ?? 'subaccount-user',
+    role,
     avatarUrl,
   } = userFormData;
 
@@ -214,7 +222,7 @@ export const updateUser = async (
         email: user.emailAddresses[0].emailAddress as string,
         name: `${firstName} ${lastName}`,
         userId: user.id,
-        role,
+        role: role ?? 'subaccount-user',
         avatarUrl: avatarUrl ?? user.imageUrl,
         agencyId: userFormData.agencyId ?? null,
       })

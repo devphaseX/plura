@@ -12,6 +12,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { TypeOf } from 'zod';
 
 export const icon = pgEnum('icon', [
   'settings',
@@ -71,7 +72,7 @@ export const userTable = pgTable('user', {
   ...timeStamps,
 });
 
-export type UserTable = typeof userTable.$inferSelect;
+export type User = typeof userTable.$inferSelect;
 export const userTableRelation = relations(userTable, ({ one, many }) => ({
   agency: one(agencyTable, {
     fields: [userTable.agencyId],
@@ -182,6 +183,7 @@ export const subaccountTableRelation = relations(
   })
 );
 
+export type SubaccountTable = typeof subaccountTable.$inferSelect;
 export const tagTable = pgTable('tag', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
@@ -491,6 +493,8 @@ export const agencySidebarOptionTableRelation = relations(
   })
 );
 
+export type AgencySidebarOption = typeof agencySidebarOptionTable.$inferSelect;
+
 export const subAccountSidebarOptionTable = pgTable(
   'subaccount_sidebar_option',
   {
@@ -514,6 +518,9 @@ export const subAccountSidebarOptionTableRelation = relations(
     }),
   })
 );
+
+export type SubaccountSidebarOption =
+  typeof subAccountSidebarOptionTable.$inferSelect;
 
 export const invitationStatus = pgEnum('invitation_status', [
   'accepted',

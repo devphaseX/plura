@@ -3,6 +3,7 @@ import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { ToastProvider } from '@/components/ui/toast';
+import { Toaster } from '@/components/ui/toaster';
 
 const font = DM_Sans({ subsets: ['latin'] });
 
@@ -25,7 +26,8 @@ export default async function RootLayout({
         disableTransitionOnChange
       >
         <body className={font.className}>
-          <ToastProvider>{children}</ToastProvider>
+          <Toaster />
+          {children}
         </body>
       </ThemeProvider>
     </html>

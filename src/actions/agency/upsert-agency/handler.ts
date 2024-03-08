@@ -12,7 +12,7 @@ import { sql } from 'drizzle-orm';
 import { getUserDetails, updateUser } from '@/lib/queries';
 import { upsertAgencySchema } from './input';
 import { createStripeCustomer } from '@/actions/stripe/handler';
-import { currentUser } from '@clerk/nextjs';
+import { clerkClient, currentUser } from '@clerk/nextjs';
 
 export const upsertAgencyAction = serverAction(
   upsertAgencySchema,
@@ -23,7 +23,6 @@ export const upsertAgencyAction = serverAction(
       let userDetails = await getUserDetails();
       let customerId: string;
 
-      debugger;
       if (taskCreateRequest || !userDetails?.agency?.customerId) {
         const { data } = formData as { data: AgencyTable };
 
@@ -62,7 +61,10 @@ export const upsertAgencyAction = serverAction(
         }
       }
 
-      if (!authUser) throw new Error('Unauthorized');
+      if (!(authUser && userDetails)) {
+        throw new Error('Unauthorized');
+      }
+
       const updatedAgency = await db.transaction(async () => {
         const [updatedAgency] = await db
           .insert(agencyTable)
@@ -124,12 +126,15 @@ export const upsertAgencyAction = serverAction(
               }))
             )
             .onConflictDoNothing();
-        }
 
-        if (taskCreateRequest) {
           await updateUser({
-            role: 'agency-owner',
             agencyId: updatedAgency.id,
+          });
+
+          await clerkClient.users.updateUserMetadata(userDetails.userId, {
+            privateMetadata: {
+              role: 'agency-owner',
+            },
           });
         }
 
