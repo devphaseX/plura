@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { ToastProvider } from '@/components/ui/toast';
 import { Toaster } from '@/components/ui/toaster';
+import { ModalProvider } from '@/providers/modal-provider';
 
 const font = DM_Sans({ subsets: ['latin'] });
 
@@ -27,7 +28,7 @@ export default async function RootLayout({
       >
         <body className={font.className}>
           <Toaster />
-          {children}
+          <ModalProvider>{children}</ModalProvider>
         </body>
       </ThemeProvider>
     </html>

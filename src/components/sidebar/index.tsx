@@ -1,5 +1,5 @@
 import { getUserDetails } from '@/lib/queries';
-import { SubaccountTable } from '@/schema';
+import { Subaccount } from '@/schema';
 import { MenuOptions } from './menu-options';
 
 type SidebarProps = {
@@ -27,7 +27,7 @@ export const Sidebar = async ({ id, type }: SidebarProps) => {
   if (!whiteLabledAgency) {
     if (type === 'subaccount') {
       sidebarLogo =
-        (details as SubaccountTable).subAccountLogo ?? user.agency.agencyLogo;
+        (details as Subaccount).subAccountLogo ?? user.agency.agencyLogo;
     }
   }
 
@@ -49,20 +49,20 @@ export const Sidebar = async ({ id, type }: SidebarProps) => {
     <>
       <MenuOptions
         defaultOpen
-        details={details}
+        details={details as any}
         id={id}
-        user={user}
+        user={user as any}
         sidebarLogo={sidebarLogo}
         sidebarOptions={sidebarOptions}
-        subaccount={accessibleSubaccounts}
+        subaccounts={accessibleSubaccounts}
       />
       <MenuOptions
-        details={details}
+        details={details as any}
         id={id}
-        user={user}
+        user={user as any}
         sidebarLogo={sidebarLogo}
         sidebarOptions={sidebarOptions}
-        subaccount={accessibleSubaccounts}
+        subaccounts={accessibleSubaccounts}
       />
     </>
   );

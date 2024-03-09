@@ -3,7 +3,7 @@
 import { serverAction } from '@/lib/server-action';
 import { db } from '@/lib/db';
 import {
-  AgencyTable,
+  Agency,
   agencyTable,
   agencySidebarOptionTable,
   subaccountTable,
@@ -24,7 +24,7 @@ export const upsertAgencyAction = serverAction(
       let customerId: string;
 
       if (taskCreateRequest || !userDetails?.agency?.customerId) {
-        const { data } = formData as { data: AgencyTable };
+        const { data } = formData as { data: Agency };
 
         const { data: payload } = await createStripeCustomer({
           email: data.companyEmail,
@@ -69,7 +69,7 @@ export const upsertAgencyAction = serverAction(
         const [updatedAgency] = await db
           .insert(agencyTable)
           .values({
-            ...(formData.data as AgencyTable),
+            ...(formData.data as Agency),
             ...(customerId && { customerId }),
           })
           .onConflictDoUpdate({

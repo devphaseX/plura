@@ -130,7 +130,7 @@ export const agencyTable = pgTable('agency', {
   ...timeStamps,
 });
 
-export type AgencyTable = typeof agencyTable.$inferSelect;
+export type Agency = typeof agencyTable.$inferSelect;
 
 export const agencyTableRelation = relations(agencyTable, ({ many, one }) => ({
   users: many(userTable),
@@ -183,7 +183,7 @@ export const subaccountTableRelation = relations(
   })
 );
 
-export type SubaccountTable = typeof subaccountTable.$inferSelect;
+export type Subaccount = typeof subaccountTable.$inferSelect;
 export const tagTable = pgTable('tag', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),

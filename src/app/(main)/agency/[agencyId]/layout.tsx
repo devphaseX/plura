@@ -3,6 +3,7 @@ import { AgencyPageParams } from '@/lib/validations/queries';
 import { currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import UnauthorizedPage from '../unauthorized/page';
+import { Sidebar } from '@/components/sidebar';
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -12,7 +13,6 @@ type LayoutProps = {
 const Layout = async ({ children, params }: LayoutProps) => {
   const agencyId = await verifyAndAcceptInvitation();
   const user = await currentUser();
-  console.log({ agencyId, meta: user?.privateMetadata });
   if (!user) {
     return redirect('/');
   }
@@ -29,7 +29,12 @@ const Layout = async ({ children, params }: LayoutProps) => {
   }
 
   let currentNotifications = [];
-  return <div>{children}</div>;
+  return (
+    <div className="h-screen overflow-hidden">
+      <Sidebar id={params.agencyId} type="agency" />
+      <div className="md:pl-[300px]">{children}</div>
+    </div>
+  );
 };
 
 export default Layout;

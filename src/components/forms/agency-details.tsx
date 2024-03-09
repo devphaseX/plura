@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAction } from 'next-safe-action/hooks';
 import React, { useEffect, useState } from 'react';
 import { useToast } from '../ui/use-toast';
-import { AgencyTable } from '@/schema';
+import { Agency } from '@/schema';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -49,7 +49,7 @@ import {
 } from '@/actions/agency/upsert-agency/input';
 import { upsertAgencyAction } from '@/actions/agency/upsert-agency/handler';
 type AgencyDetailsProps = {
-  data?: Partial<AgencyTable>;
+  data?: Partial<Agency>;
 };
 
 const AgencyDetails = ({ data }: AgencyDetailsProps) => {
@@ -328,7 +328,7 @@ const AgencyDetails = ({ data }: AgencyDetailsProps) => {
                         data: {
                           goal: Number(val),
                           companyEmail: data.companyEmail,
-                        } as AgencyTable,
+                        } as Agency,
                       });
                       await createActivityLogNotification({
                         agencyId: data.id,
