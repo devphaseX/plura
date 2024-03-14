@@ -247,3 +247,17 @@ export const updateUser = async (
     throw new Error('An error occurred while updating user record');
   }
 };
+
+export const getNotificationWithUser = (agencyId: string) => {
+  try {
+    return db.query.notificationTable.findMany({
+      with: {
+        user: true,
+      },
+      where: eq(notificationTable.agencyId, agencyId),
+    });
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+};

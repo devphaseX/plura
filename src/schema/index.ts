@@ -12,7 +12,6 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { TypeOf } from 'zod';
 
 export const icon = pgEnum('icon', [
   'settings',
@@ -581,6 +580,8 @@ export const notificationTableRelation = relations(
     }),
   })
 );
+
+export type Notification = typeof notificationTable.$inferSelect;
 
 export const plan = pgEnum('plan', [
   'price_1OYxkqFj9oKEERu1NbKUxXxN',

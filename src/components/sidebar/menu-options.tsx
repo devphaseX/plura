@@ -64,7 +64,7 @@ const MenuOptions = ({
 
   if (!mounted) return;
   return (
-    <Sheet modal={false} open={true} {...openState}>
+    <Sheet modal={false} open={defaultOpen} {...openState}>
       <SheetTrigger
         asChild
         className="absolute left-4 top-4 z-[100] md:hidden flex"
@@ -169,7 +169,7 @@ const MenuOptions = ({
                     </CommandGroup>
                   ) : null}
                   <CommandGroup heading="Accounts">
-                    <div className="hidden last:block  text-foreground">
+                    <div className="hidden last:block text-foreground">
                       No account
                     </div>
                     {(subaccounts ?? []).map((subaccount) => (
@@ -252,9 +252,9 @@ const MenuOptions = ({
           <nav>
             <Command className="rounded-lg overflow-visible bg-transparent">
               <CommandInput placeholder="Search..." />
-              <CommandList className="pb-16 overflow-visible">
+              <CommandList className="py-4 overflow-visible">
                 <CommandEmpty>No result found</CommandEmpty>
-                <CommandGroup>
+                <CommandGroup className="overflow-visible">
                   {sidebarOptions.map((option) => {
                     const Icon = icons.find(
                       (icon) => icon.value === option.icon
@@ -266,8 +266,7 @@ const MenuOptions = ({
                       >
                         <Link
                           href={option.link as string}
-                          className="flex items-center gap-2 hover:bg-transparent rounded-md 
-                          transition-all md:w-full w-[320px]"
+                          className="flex items-center gap-2 hover:bg-transparent rounded-md transition-all md:w-full w-[320px]"
                         >
                           {Icon && <Icon />}
                           {option.name}
