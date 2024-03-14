@@ -9,7 +9,7 @@ import {
   subaccountTable,
 } from '@/schema';
 import { sql } from 'drizzle-orm';
-import { getUserDetails, updateUser } from '@/lib/queries';
+import { getUserDetails, initUser } from '@/lib/queries';
 import { upsertAgencySchema } from './input';
 import { createStripeCustomer } from '@/actions/stripe/handler';
 import { clerkClient, currentUser } from '@clerk/nextjs';
@@ -54,7 +54,7 @@ export const upsertAgencyAction = serverAction(
 
         customerId = payload.customerId;
         if (taskCreateRequest) {
-          await updateUser({
+          await initUser({
             role: 'agency-owner',
           });
           userDetails = await getUserDetails();
@@ -127,7 +127,7 @@ export const upsertAgencyAction = serverAction(
             )
             .onConflictDoNothing();
 
-          await updateUser({
+          await initUser({
             agencyId: updatedAgency.id,
           });
 

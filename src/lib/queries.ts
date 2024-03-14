@@ -199,7 +199,7 @@ export const createActivityLogNotification = async (
   });
 };
 
-export const updateUser = async (
+export const initUser = async (
   userFormData: Partial<User> & { firstName?: string; lastName?: string }
 ) => {
   const user = await currentUser();
@@ -246,6 +246,28 @@ export const updateUser = async (
     console.error(e);
     throw new Error('An error occurred while updating user record');
   }
+};
+
+export const updateUser = async (
+  updateUserForm: Partial<Omit<User, 'email'>> & { email: string }
+) => {
+  const [updateUser] = await db
+    .update(userTable)
+    .set(updateUserForm)
+    .where(eq(userTable.email, updateUserForm.email))
+    .returning();
+
+  if (!updateUser) {
+    throw new Error('User not found');
+  }
+
+  await clerkClient.users.updateUserMetadata(updateUser.userId, {
+    privateMetadata: {
+      role: updateUser.role ?? 'subaccount-user',
+    },
+  });
+
+  return updateUser;
 };
 
 export const getNotificationWithUser = (agencyId: string) => {

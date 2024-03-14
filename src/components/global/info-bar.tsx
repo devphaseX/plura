@@ -18,6 +18,7 @@ import { Card } from '../ui/card';
 import { Switch } from '../ui/switch';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import { AvatarFallback } from '@radix-ui/react-avatar';
+import { ModeToggle } from './mode-toggle';
 
 type InfoBarProps = {
   notifications: NonNullable<NotificationWithUser>[];
@@ -59,7 +60,7 @@ export const InfoBar = ({
           <UserButton afterSignOutUrl="/" />
           <Sheet>
             <SheetTrigger>
-              <div className="rounded-full w-8 h-8 bg-primary flex items-center justify-center text-white">
+              <div className="rounded-full w-9 h-9 bg-primary flex items-center justify-center text-white">
                 <Bell size={17} />
               </div>
             </SheetTrigger>
@@ -122,6 +123,7 @@ export const InfoBar = ({
               </div>
             </SheetContent>
           </Sheet>
+          <ModeToggle />
         </div>
       </div>
     </>
