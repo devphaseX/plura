@@ -2,8 +2,8 @@ import { serverAction } from '@/lib/server-action';
 import { UserSchema } from './input';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
-import { userTable } from '@/schema';
-import { eq, sql } from 'drizzle-orm';
+import { agencyTable, subaccountTable, userTable } from '@/schema';
+import { eq, or, sql } from 'drizzle-orm';
 import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
 
 export const initUser = serverAction(
@@ -56,12 +56,19 @@ export const initUser = serverAction(
 );
 
 export const updateUserAction = serverAction(
-  UserSchema.omit({ userId: true, id: true }),
+  UserSchema.omit({ userId: true }).required({ id: true }),
   async (updateUserForm) => {
     const authUser = await getUserDetails();
+    const updateUserDetails = await getUserDetails(updateUserForm.id);
+
     if (!authUser) {
-      throw new Error('User account not fully initiated');
+      throw new Error('Auth account not fully initial');
     }
+
+    if (!updateUserDetails) {
+      throw new Error('User not found');
+    }
+
     const updatedUser = await db.transaction(async () => {
       const { agencyId, ...excludeAgencyIdUpdateUserForm } = updateUserForm;
 
@@ -80,7 +87,18 @@ export const updateUserAction = serverAction(
             end
         `,
         })
-        .where(eq(userTable.userId, authUser.userId))
+        .where(
+          sql`
+        ${userTable.id} = ${updateUserDetails.id} and (
+            ${authUser.id} = ${updateUserDetails.id} or exists (
+              select * from ${userTable}
+              inner join ${subaccountTable} on ${subaccountTable.agencyId} = ${authUser.agencyId}
+              where ${authUser.role} in ('agency-admin', 'agency-owner') 
+              and ${userTable.userId} = ${updateUserDetails.id}
+            )
+        )
+        `
+        )
         .returning();
 
       if (authUser.role === 'subaccount-user') {

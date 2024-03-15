@@ -14,15 +14,21 @@ import {
 import { redirect } from 'next/navigation';
 import { alias } from 'drizzle-orm/pg-core';
 
-export const getUserDetails = async () => {
-  const user = await currentUser();
+export const getUserDetails = async (userId?: string) => {
+  if (userId) {
+    const user = await currentUser();
 
-  if (!user) {
-    throw new Error('Unauthorized');
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
+
+    userId = user.emailAddresses[0].emailAddress;
   }
 
   const userData = await db.query.userTable.findFirst({
-    where: eq(userTable.email, user.emailAddresses[0].emailAddress),
+    where: sql`${userTable.userId} = ${userId} 
+    or ${userTable.id} = ${userId} 
+    or ${userTable.email} = ${userId}`,
 
     with: {
       agency: {

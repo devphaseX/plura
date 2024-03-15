@@ -54,12 +54,7 @@ type UserDetailsProps = {
   permissions?: Permission[];
 };
 
-const UserDetails = ({
-  userDetails,
-  type,
-  subaccounts,
-  permissions,
-}: UserDetailsProps) => {
+const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const [subaccountPermissions, setSubaccountPermission] =
     useState<UserWithPermissionsAndSubAccounts | null>(null);
   const { data, setClose } = useModal();
@@ -67,7 +62,6 @@ const UserDetails = ({
     useState<AuthUserWithAgencySidebarOptionsSubAccounts | null>();
   const [roleState, setRoleState] = useState('');
 
-  const [] = useState();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -135,7 +129,12 @@ const UserDetails = ({
     },
   });
 
-  const onSubmit = form.handleSubmit(updateUser);
+  const onSubmit = form.handleSubmit((formData) =>
+    updateUser({
+      ...formData,
+      id: (data?.user?.id ?? userDetails?.id) as string,
+    })
+  );
 
   useEffect(() => {
     if (!data?.user) return;
