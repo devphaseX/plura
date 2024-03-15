@@ -2,7 +2,12 @@ import { serverAction } from '@/lib/server-action';
 import { UserSchema } from './input';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
-import { agencyTable, subaccountTable, userTable } from '@/schema';
+import {
+  agencyTable,
+  permissionTable,
+  subaccountTable,
+  userTable,
+} from '@/schema';
 import { eq, or, sql } from 'drizzle-orm';
 import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
 
@@ -91,26 +96,26 @@ export const updateUserAction = serverAction(
           sql`
         ${userTable.id} = ${updateUserDetails.id} and (
             ${authUser.id} = ${updateUserDetails.id} or exists (
-              select * from ${userTable}
-              inner join ${subaccountTable} on ${subaccountTable.agencyId} = ${authUser.agencyId}
-              where ${authUser.role} in ('agency-admin', 'agency-owner') 
-              and ${userTable.userId} = ${updateUserDetails.id}
+                select * from ${permissionTable}
+                inner join ${subaccountTable} on ${subaccountTable.id} = ${permissionTable.subAccountId}
+                where ${permissionTable.email} = ${updateUserDetails.email} 
+                and ${subaccountTable.agencyId} = ${authUser.agencyId} and ${authUser.role} in (
+                  'agency-admin', 'agency-owner'
+                )
             )
         )
         `
         )
         .returning();
 
-      if (authUser.role === 'subaccount-user') {
-        await allowedPermissions.map((permission) => {
-          if (!permission.access) return null;
+      await allowedPermissions.map((permission) => {
+        if (!permission.access) return null;
 
-          return createActivityLogNotification({
-            subaccountId: permission.subAccountId,
-            description: `Updated ${authUser.name} information`,
-          });
+        return createActivityLogNotification({
+          subaccountId: permission.subAccountId,
+          description: `Updated ${authUser.name} information`,
         });
-      }
+      });
 
       return updatedUser;
     });
