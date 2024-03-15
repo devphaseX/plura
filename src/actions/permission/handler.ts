@@ -16,7 +16,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
 
-export const updatePermission = serverAction(
+export const updatePermissionAction = serverAction(
   PermissionSchema.extend({
     type: z.enum(['agency', 'subaccount']).default('agency'),
   }),
@@ -46,19 +46,13 @@ export const updatePermission = serverAction(
       ] = await db
         .with(subaccountInfo)
         .select({
-          permitted: sql<boolean>`
-                case
-                    when ${data.type} = 'agency' then (
+          permitted: sql<boolean>`                    
                         ${authUser.userId} in (
                             select ${userTable.userId} from ${userTable}
-                            where ${userTable.agencyId} = ${currentAgency.id}
+                            where ${userTable.agencyId} = ${currentAgency.id} 
+                            and ${authUser.role} in ('agency-owner', 'agency-admin')
                         )
-                    ) 
-                    else exists (
-                        select * from ${subaccountInfo}
-                        where ${authUser.email}  = ${subaccountInfo.companyEmail}
-                    )
-                end
+                    
         `,
           agencyId: currentAgency.id,
           subaccountId: subaccountInfo.id,
@@ -90,13 +84,11 @@ export const updatePermission = serverAction(
           })
           .returning();
 
-        if (data.type === 'agency') {
-          await createActivityLogNotification({
-            agencyId,
-            description: `Gave ${authUser.name} access to | ${subaccountName}`,
-            subaccountId: subaccountId as never,
-          });
-        }
+        await createActivityLogNotification({
+          description: `Gave ${authUser.name} access to | ${subaccountName}`,
+          subaccountId: subaccountId as never,
+          agencyId,
+        });
 
         return updatedPermission;
       });

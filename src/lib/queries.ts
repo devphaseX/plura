@@ -283,3 +283,14 @@ export const getNotificationWithUser = (agencyId: string) => {
     throw e;
   }
 };
+
+export const getUserPermissions = (userId: string) => {
+  return db.query.userTable.findFirst({
+    where: eq(userTable.id, userId),
+    with: {
+      permissions: {
+        with: { subaccount: true },
+      },
+    },
+  });
+};

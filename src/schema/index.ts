@@ -111,6 +111,8 @@ export const permissionTableRelation = relations(
   })
 );
 
+export type Permission = typeof permissionTable.$inferSelect;
+
 export const agencyTable = pgTable('agency', {
   id: uuid('id').primaryKey().defaultRandom(),
   connectedAccountId: text('connected_account_id'),
