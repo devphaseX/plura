@@ -26,6 +26,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 import { DeleteButton } from './delete-button';
+import { CreateSubaccountButton } from './create-button';
 
 type SubaccountProps = {
   user: NonNullable<Awaited<ReturnType<typeof getUserDetails>>>;
@@ -35,7 +36,10 @@ export const SubaccountList = ({ user }: SubaccountProps) => {
   return (
     <AlertDialog>
       <div className="flex flex-col">
-        <Button>Create</Button>
+        <CreateSubaccountButton
+          user={user}
+          className="w-[200px] self-end m-6"
+        />
         <Command className="rounded-lg bg-transparent">
           <CommandInput placeholder="Search Account" />
           <CommandList>

@@ -30,6 +30,7 @@ import { SubaccountDetails } from '../forms/subaccount-details';
 import { Separator } from '../ui/separator';
 import { icons } from '@/lib/constants';
 import { isNull } from 'drizzle-orm';
+import { ScrollArea } from '@radix-ui/react-scroll-area';
 
 type MenuOptionsProps = {
   defaultOpen?: boolean;
@@ -113,37 +114,17 @@ const MenuOptions = ({
                 </div>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 h-80 mt-4 z-[200]">
-              <Command className="rounded-lg">
-                <CommandInput placeholder="Search Accounts" />
-                <CommandList>
-                  <CommandEmpty>No result found</CommandEmpty>
-                  {user?.role === 'agency-owner' ||
-                  user?.role === 'agency-admin' ? (
-                    <CommandGroup heading="Agency">
-                      <CommandItem className="!bg-transparent my-2 text-primary border-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all">
-                        {defaultOpen ? (
-                          <Link
-                            href={`/agency/${user?.agency?.id}`}
-                            className="flex gap-4 w-full h-full"
-                          >
-                            <div className="relative w-16">
-                              <Image
-                                src={user?.agency?.agencyLogo ?? ''}
-                                alt="Agency Logo"
-                                fill
-                                className="rounded-md object-contain"
-                              />
-                            </div>
-                            <div className="flex flex-col flex-1">
-                              {user?.agency?.name}
-                              <span className="text-muted-foreground">
-                                {user.agency?.address}
-                              </span>
-                            </div>
-                          </Link>
-                        ) : (
-                          <SheetClose asChild>
+            <PopoverContent className="mt-4 z-[200] w-80">
+              <ScrollArea className="h-80">
+                <Command className="rounded-lg">
+                  <CommandInput placeholder="Search Accounts" />
+                  <CommandList>
+                    <CommandEmpty>No result found</CommandEmpty>
+                    {user?.role === 'agency-owner' ||
+                    user?.role === 'agency-admin' ? (
+                      <CommandGroup heading="Agency">
+                        <CommandItem className="!bg-transparent my-2 text-primary border-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all">
+                          {defaultOpen ? (
                             <Link
                               href={`/agency/${user?.agency?.id}`}
                               className="flex gap-4 w-full h-full"
@@ -163,39 +144,42 @@ const MenuOptions = ({
                                 </span>
                               </div>
                             </Link>
-                          </SheetClose>
-                        )}
-                      </CommandItem>
-                    </CommandGroup>
-                  ) : null}
-                  <CommandGroup heading="Accounts">
-                    <div className="hidden last:block text-foreground">
-                      No account
-                    </div>
-                    {(subaccounts ?? []).map((subaccount) => (
-                      <CommandItem key={subaccount.id}>
-                        {defaultOpen ? (
-                          <Link
-                            href={`/subaccount/${subaccount.id}`}
-                            className="flex gap-4 w-full h-full"
-                          >
-                            <div className="relative w-16">
-                              <Image
-                                src={subaccount.subAccountLogo ?? ''}
-                                alt="Subaccount Logo"
-                                fill
-                                className="rounded-md object-contain"
-                              />
-                            </div>
-                            <div className="flex flex-col flex-1">
-                              {subaccount.name}
-                              <span className="text-muted-foreground">
-                                {subaccount.address}
-                              </span>
-                            </div>
-                          </Link>
-                        ) : (
-                          <SheetClose asChild>
+                          ) : (
+                            <SheetClose asChild>
+                              <Link
+                                href={`/agency/${user?.agency?.id}`}
+                                className="flex gap-4 w-full h-full"
+                              >
+                                <div className="relative w-16">
+                                  <Image
+                                    src={user?.agency?.agencyLogo ?? ''}
+                                    alt="Agency Logo"
+                                    fill
+                                    className="rounded-md object-contain"
+                                  />
+                                </div>
+                                <div className="flex flex-col flex-1">
+                                  {user?.agency?.name}
+                                  <span className="text-muted-foreground">
+                                    {user.agency?.address}
+                                  </span>
+                                </div>
+                              </Link>
+                            </SheetClose>
+                          )}
+                        </CommandItem>
+                      </CommandGroup>
+                    ) : null}
+                    <CommandGroup heading="Accounts">
+                      <div className="hidden last:block text-foreground">
+                        No account
+                      </div>
+                      {(subaccounts ?? []).map((subaccount) => (
+                        <CommandItem
+                          key={subaccount.id}
+                          className="!bg-transparent my-2 text-primary broder-[1px] border-border rounded-md hover:!bg-muted cursor-pointer transition-all"
+                        >
+                          {defaultOpen ? (
                             <Link
                               href={`/subaccount/${subaccount.id}`}
                               className="flex gap-4 w-full h-full"
@@ -215,34 +199,56 @@ const MenuOptions = ({
                                 </span>
                               </div>
                             </Link>
-                          </SheetClose>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-                {(user?.role === 'agency-owner' ||
-                  user?.role === 'agency-admin') && (
-                  <SheetClose>
-                    <Button
-                      className="w-full flex gap-2"
-                      onClick={() =>
-                        setOpen(
-                          <CustomModal
-                            title="Create A Subaccount"
-                            subheading="You can switch between your agency and subaccount in the sidebar"
-                          >
-                            <SubaccountDetails />
-                          </CustomModal>
-                        )
-                      }
-                    >
-                      <PlusCircleIcon size={15} />
-                      Create Sub Account
-                    </Button>
-                  </SheetClose>
-                )}
-              </Command>
+                          ) : (
+                            <SheetClose asChild>
+                              <Link
+                                href={`/subaccount/${subaccount.id}`}
+                                className="flex gap-4 w-full h-full"
+                              >
+                                <div className="relative w-16">
+                                  <Image
+                                    src={subaccount.subAccountLogo ?? ''}
+                                    alt="Subaccount Logo"
+                                    fill
+                                    className="rounded-md object-contain"
+                                  />
+                                </div>
+                                <div className="flex flex-col flex-1">
+                                  {subaccount.name}
+                                  <span className="text-muted-foreground">
+                                    {subaccount.address}
+                                  </span>
+                                </div>
+                              </Link>
+                            </SheetClose>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                  {(user?.role === 'agency-owner' ||
+                    user?.role === 'agency-admin') && (
+                    <SheetClose>
+                      <Button
+                        className="w-full flex gap-2"
+                        onClick={() =>
+                          setOpen(
+                            <CustomModal
+                              title="Create A Subaccount"
+                              subheading="You can switch between your agency and subaccount in the sidebar"
+                            >
+                              <SubaccountDetails />
+                            </CustomModal>
+                          )
+                        }
+                      >
+                        <PlusCircleIcon size={15} />
+                        Create Sub Account
+                      </Button>
+                    </SheetClose>
+                  )}
+                </Command>
+              </ScrollArea>
             </PopoverContent>
           </Popover>
           <p className="text-muted-foreground text-xs mb-2 uppercase">
