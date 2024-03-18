@@ -43,7 +43,7 @@ export const SubaccountList = ({ user }: SubaccountProps) => {
         <Command className="rounded-lg bg-transparent">
           <CommandInput placeholder="Search Account" />
           <CommandList>
-            <CommandEmpty>No Result Found.</CommandEmpty>
+            {/* <CommandEmpty>No Result Found.</CommandEmpty> */}
             <CommandGroup heading="Subaccount">
               {user.agency?.subaccounts.length ? (
                 user.agency?.subaccounts.map((subaccount) => (
@@ -97,9 +97,7 @@ export const SubaccountList = ({ user }: SubaccountProps) => {
                         <AlertDialogCancel className="mb-2">
                           Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction className="bg-destructive hover:bg-destructive">
-                          <DeleteButton subaccountId={subaccount.id} />
-                        </AlertDialogAction>
+                        <DeleteButton subaccountId={subaccount.id} />
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </CommandItem>
