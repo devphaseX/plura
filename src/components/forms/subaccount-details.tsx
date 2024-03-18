@@ -72,10 +72,7 @@ export const SubaccountDetails = ({ data }: SubaccountDetailsProps) => {
     });
 
   const handleSubmit = form.handleSubmit((formData) => {
-    upsertSubaccount({
-      type: data ? 'update' : 'create',
-      data: formData as Subaccount,
-    });
+    upsertSubaccount(formData);
   });
 
   const submittingSubaccountForm = upsertSubaccountStatus === 'executing';

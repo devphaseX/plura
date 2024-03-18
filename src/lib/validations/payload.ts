@@ -22,7 +22,7 @@ export const CreateSubaccountDetailsSchema = createInsertSchema(
     state: ({ state }) => state.min(1),
     country: ({ country }) => country.min(1),
   }
-);
+).partial({ id: true, agencyId: true });
 
 export type CreateSubaccountDetailsFormData = TypeOf<
   typeof CreateSubaccountDetailsSchema

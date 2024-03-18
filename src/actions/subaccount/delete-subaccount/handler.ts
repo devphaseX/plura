@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { getUserDetails } from '@/lib/queries';
+import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
 import { serverAction } from '@/lib/server-action';
 import { subaccountTable } from '@/schema';
 import { sql } from 'drizzle-orm';
@@ -17,14 +17,25 @@ export const removeSubaccountAction = serverAction(
         throw new Error('Unauthorized');
       }
 
-      const [removedSubaccount] = await db
-        .delete(subaccountTable)
-        .where(
-          sql`
-      ${subaccountTable.agencyId} = ${user.agencyId} and ${subaccountTable.id} = ${id}
-      `
-        )
-        .returning();
+      const removedSubaccount = await db.transaction(async () => {
+        const [removedSubaccount] = await db
+          .delete(subaccountTable)
+          .where(
+            sql`
+        ${subaccountTable.agencyId} = ${user.agencyId} and ${subaccountTable.id} = ${id}
+        `
+          )
+          .returning();
+
+        if (removedSubaccount) {
+          await createActivityLogNotification({
+            agencyId: removedSubaccount.agencyId,
+            description: `Deleted a subaccount | ${removedSubaccount.name} `,
+          });
+        }
+
+        return removedSubaccount;
+      });
 
       if (!removedSubaccount) {
         throw new Error('Subaccount not found');

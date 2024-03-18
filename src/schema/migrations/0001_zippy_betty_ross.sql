@@ -1,0 +1,1 @@
+ALTER TABLE "subaccount" ADD CONSTRAINT "subaccount_company_email_unique" UNIQUE("company_email");

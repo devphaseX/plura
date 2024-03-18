@@ -151,7 +151,7 @@ export const subaccountTable = pgTable('subaccount', {
   connectAccountId: text('connect_account_id'),
   name: varchar('name', { length: 256 }),
   subAccountLogo: text('subaccount_logo').notNull(),
-  companyEmail: text('company_email').notNull(),
+  companyEmail: text('company_email').unique().notNull(),
   companyPhone: varchar('company_phone', { length: 64 }),
   goal: integer('goal').default(5).notNull(),
   address: varchar('address', { length: 256 }).notNull(),

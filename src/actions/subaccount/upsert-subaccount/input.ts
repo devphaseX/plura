@@ -19,19 +19,6 @@ export const CreateSubaccountSchema = createInsertSchema(subaccountTable, {
   zipCode: ({ zipCode }) => zipCode.min(1),
   state: ({ state }) => state.min(1),
   country: ({ country }) => country.min(1),
-});
+}).partial({ agencyId: true });
 
 export type CreateSubaccountInput = TypeOf<typeof CreateSubaccountSchema>;
-
-export const UpdateSubaccountSchema = CreateSubaccountSchema.partial({
-  name: true,
-  companyEmail: true,
-  companyPhone: true,
-  address: true,
-  city: true,
-  zipCode: true,
-  state: true,
-  country: true,
-});
-
-export type UpdateSubaccountInput = TypeOf<typeof UpdateSubaccountSchema>;

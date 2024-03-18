@@ -8,6 +8,13 @@
       "when": 1709814323165,
       "tag": "0000_careful_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1710744872291,
+      "tag": "0001_zippy_betty_ross",
+      "breakpoints": true
     }
   ]
 }

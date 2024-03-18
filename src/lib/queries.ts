@@ -2,7 +2,7 @@
 
 import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from './db';
-import { eq, getTableColumns, sql } from 'drizzle-orm';
+import { eq, getTableColumns, or, sql } from 'drizzle-orm';
 import {
   User,
   agencyTable,
@@ -13,9 +13,11 @@ import {
 } from '@/schema';
 import { redirect } from 'next/navigation';
 import { alias } from 'drizzle-orm/pg-core';
+import { z } from 'zod';
+import { cache } from 'react';
 
-export const getUserDetails = async (userId?: string) => {
-  if (userId) {
+export const getUserDetails = cache(async (userId?: string) => {
+  if (!userId) {
     const user = await currentUser();
 
     if (!user) {
@@ -25,11 +27,15 @@ export const getUserDetails = async (userId?: string) => {
     userId = user.emailAddresses[0].emailAddress;
   }
 
+  const uuidType = z.string().uuid();
   const userData = await db.query.userTable.findFirst({
-    where: sql`${userTable.userId} = ${userId} 
-    or ${userTable.id} = ${userId} 
-    or ${userTable.email} = ${userId}`,
-
+    where: or(
+      uuidType.safeParse(userId).success
+        ? eq(userTable.userId, userId)
+        : undefined,
+      eq(userTable.email, userId),
+      uuidType.safeParse(userId).success ? eq(userTable.id, userId) : undefined
+    ),
     with: {
       agency: {
         with: {
@@ -46,7 +52,7 @@ export const getUserDetails = async (userId?: string) => {
   });
 
   return userData;
-};
+});
 
 export const verifyAndAcceptInvitation = async () => {
   const user = await currentUser();
@@ -299,4 +305,11 @@ export const getUserPermissions = (userId: string) => {
       },
     },
   });
+};
+
+export const getSubaccountDetails = async (subaccountId: string) => {
+  const response = await db.query.subaccountTable.findFirst({
+    where: eq(subaccountTable.id, subaccountId),
+  });
+  return response;
 };

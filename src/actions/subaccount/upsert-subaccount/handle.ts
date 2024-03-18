@@ -1,12 +1,7 @@
 'use server';
 
 import { serverAction } from '@/lib/server-action';
-import {
-  CreateSubaccountInput,
-  CreateSubaccountSchema,
-  UpdateSubaccountInput,
-  UpdateSubaccountSchema,
-} from './input';
+import { CreateSubaccountInput, CreateSubaccountSchema } from './input';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import {
@@ -17,39 +12,26 @@ import {
   userTable,
 } from '@/schema';
 import { eq, sql } from 'drizzle-orm';
-import { createActivityLogNotification } from '@/lib/queries';
-
-const InputSchema = z.union([
-  z.object({ type: z.enum(['create']), data: CreateSubaccountSchema }),
-  z.object({
-    type: z.enum(['update']),
-    data: UpdateSubaccountSchema.extend({ id: z.string().uuid() }),
-  }),
-]);
+import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
+import { revalidatePath } from 'next/cache';
 
 export const upsertSubaccountAction = serverAction(
-  InputSchema,
+  CreateSubaccountSchema,
   async (formData) => {
     try {
-      const [agencyOwner] = await db.select().from(userTable).where(sql`
-           ${userTable.agencyId} =  ${formData.data.agencyId} 
-           and ${userTable.role} = 'agency-owner'
-        `);
-
-      if (!agencyOwner) {
-        throw new Error('User not an agency owner');
+      const authUser = await getUserDetails();
+      if (!(authUser && authUser.agencyId)) {
+        throw new Error('Unauthorized');
       }
-
-      const { data } = formData;
 
       const subaccount = await db.transaction(async () => {
         const [subaccount] = await db
           .insert(subaccountTable)
-          .values(data as CreateSubaccountInput)
+          .values({ ...formData, agencyId: authUser.agencyId as string })
           .onConflictDoUpdate({
             target: subaccountTable.companyEmail,
-            set: data as UpdateSubaccountInput,
-            where: eq(subaccountTable.id, data.id as string),
+            set: formData,
+            where: sql`${subaccountTable.id} = ${formData.id ?? null}::uuid`,
           })
           .returning();
 
@@ -60,7 +42,7 @@ export const upsertSubaccountAction = serverAction(
         await Promise.all([
           db.insert(permissionTable).values({
             subAccountId: subaccount.id,
-            email: agencyOwner.email,
+            email: authUser.email,
             access: true,
           }),
           db
@@ -112,8 +94,8 @@ export const upsertSubaccountAction = serverAction(
         ]);
 
         await createActivityLogNotification({
-          agencyId: agencyOwner.agencyId as string,
-          description: `${agencyOwner.name} | updated sub account | ${subaccount.name}`,
+          agencyId: authUser.agencyId as string,
+          description: `${authUser.name} | updated sub account | ${subaccount.name}`,
           subaccountId: subaccount.id as never,
         });
 
@@ -124,14 +106,12 @@ export const upsertSubaccountAction = serverAction(
         throw new Error('Subaccount not found');
       }
 
-      return { type: formData.type, data: subaccount };
+      revalidatePath(`/agency/${authUser.agencyId}/all-subaccounts`);
+
+      return { data: subaccount };
     } catch (e) {
       console.log(e);
-      throw new Error(
-        `An error occurred while ${
-          formData.type === 'create' ? 'creating' : 'updating'
-        } subaccount`
-      );
+      throw new Error(`An error occurred saving your subaccount details`);
     }
   }
 );

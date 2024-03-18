@@ -108,14 +108,16 @@ export const updateUserAction = serverAction(
         )
         .returning();
 
-      await allowedPermissions.map((permission) => {
-        if (!permission.access) return null;
+      await Promise.all(
+        allowedPermissions.map((permission) => {
+          if (!permission.access) return null;
 
-        return createActivityLogNotification({
-          subaccountId: permission.subAccountId,
-          description: `Updated ${authUser.name} information`,
-        });
-      });
+          return createActivityLogNotification({
+            subaccountId: permission.subAccountId,
+            description: `Updated ${authUser.name} information`,
+          });
+        })
+      );
 
       return updatedUser;
     });
