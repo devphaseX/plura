@@ -1,5 +1,4 @@
 'use server';
-
 import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from './db';
 import { eq, getTableColumns, or, sql } from 'drizzle-orm';
@@ -8,6 +7,7 @@ import {
   agencyTable,
   invitationTable,
   notificationTable,
+  permissionTable,
   subaccountTable,
   userTable,
 } from '@/schema';
@@ -312,4 +312,43 @@ export const getSubaccountDetails = async (subaccountId: string) => {
     where: eq(subaccountTable.id, subaccountId),
   });
   return response;
+};
+
+export const getUserWithAgencyAssets = (agencyId: string) => {
+  return db.query.userTable.findMany({
+    where: eq(userTable.agencyId, agencyId),
+    with: {
+      agency: {
+        with: { subaccounts: true },
+      },
+
+      permissions: {
+        with: { subaccount: true },
+        where: eq(permissionTable.access, true),
+      },
+    },
+  });
+};
+
+export const getUser = (id: string) => {
+  return db
+    .select()
+    .from(userTable)
+    .where(eq(userTable.id, id))
+    .then(([user]) => user);
+};
+
+export const removeUserFromAgency = async (userId: string) => {
+  await clerkClient.users.updateUserMetadata(userId, {
+    privateMetadata: {
+      role: undefined,
+    },
+  });
+
+  return (
+    await db
+      .update(userTable)
+      .set({ agencyId: null, role: 'subaccount-guest' })
+      .returning()
+  ).at(0);
 };

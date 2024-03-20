@@ -1,7 +1,7 @@
 'use server';
 
 import { serverAction } from '@/lib/server-action';
-import { CreateSubaccountInput, CreateSubaccountSchema } from './input';
+import { CreateSubaccountSchema } from './input';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import {

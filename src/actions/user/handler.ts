@@ -1,3 +1,4 @@
+'use server';
 import { serverAction } from '@/lib/server-action';
 import { UserSchema } from './input';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs';

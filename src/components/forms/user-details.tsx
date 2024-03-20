@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   AuthUserWithAgencySidebarOptionsSubAccounts,
   UserWithPermissionsAndSubAccounts,
-} from '../../../types';
+} from '../../types';
 import { useModal } from '@/providers/modal-provider';
 import { useToast } from '../ui/use-toast';
 import { useRouter } from 'next/navigation';

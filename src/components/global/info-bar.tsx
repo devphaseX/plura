@@ -1,7 +1,7 @@
 'use client';
 
 import { User } from '@/schema';
-import { NotificationWithUser } from '../../../types';
+import { NotificationWithUser } from '../../types';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { UserButton } from '@clerk/nextjs';
@@ -83,7 +83,7 @@ export const InfoBar = ({
                 {currentNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className="flex flex-col gap-y-2 mb-2 overflow-x-scroll text-ellipsis"
+                    className="flex flex-col gap-y-2 mb-2 text-ellipsis"
                   >
                     <div className="flex gap-2">
                       <Avatar>
@@ -117,7 +117,7 @@ export const InfoBar = ({
                   </div>
                 ))}
 
-                <div className="hidden items-center justify-center  last:flex">
+                <div className="flex items-center justify-center  last:hidden">
                   You have no notifications
                 </div>
               </div>

@@ -1,11 +1,8 @@
-import { UserDetails } from '@/components/forms/user-details';
-// export c
-
+'use server';
 import { serverAction } from '@/lib/server-action';
 import { PermissionSchema } from './input';
-import { currentUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
-import { eq, inArray, or, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import {
   agencyTable,
   permissionTable,
