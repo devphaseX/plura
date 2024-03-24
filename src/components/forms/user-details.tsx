@@ -99,6 +99,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const form = useForm<UserInput>({
     resolver: zodResolver(UserSchema),
     mode: 'onChange',
+    defaultValues: userDetails ?? data?.user,
   });
 
   useEffect(() => {
@@ -156,6 +157,8 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
     permissionId: string | undefined
   ) => {
     if (!data?.user?.email) return;
+
+    if (data.user.role === 'agency-owner') return;
 
     await updatePermission({
       email: data.user.email,
@@ -236,54 +239,62 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
               disabled={submittingUserInfo}
               control={form.control}
               name="role"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel> User Role</FormLabel>
-                  <Select
-                    disabled={field.value === 'agency-owner'}
-                    onValueChange={(value) => {
-                      if (
-                        value === 'subaccount-user' ||
-                        value === 'subaccount-guest'
-                      ) {
-                        setRoleState(
-                          'You need to have subaccounts to assign Subaccount access to team members.'
-                        );
-                      } else {
-                        setRoleState('');
-                      }
-                      field.onChange(value);
-                    }}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user role..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="agency-admin">Agency Admin</SelectItem>
-                      {(data?.user?.role === 'agency-owner' ||
-                        userDetails?.role === 'agency-owner') && (
-                        <SelectItem value="agency-owner">
-                          Agency Owner
+              render={({ field }) => {
+                return (
+                  <FormItem className="flex-1">
+                    <FormLabel> User Role</FormLabel>
+                    <Select
+                      disabled={field.value === 'agency-owner'}
+                      onValueChange={(value) => {
+                        if (
+                          value === 'subaccount-user' ||
+                          value === 'subaccount-guest'
+                        ) {
+                          setRoleState(
+                            'You need to have subaccounts to assign Subaccount access to team members.'
+                          );
+                        } else {
+                          setRoleState('');
+                        }
+                        field.onChange(value);
+                      }}
+                      value={field.value ?? data?.user?.role}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select user role..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="agency-admin">
+                          Agency Admin
                         </SelectItem>
-                      )}
-                      <SelectItem value="subaccount-user">
-                        Sub Account User
-                      </SelectItem>
-                      <SelectItem value="subaccount-guest">
-                        Sub Account Guest
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-muted-foreground">{roleState}</p>
-                </FormItem>
-              )}
+                        {(data?.user?.role === 'agency-owner' ||
+                          userDetails?.role === 'agency-owner') && (
+                          <SelectItem value="agency-owner">
+                            Agency Owner
+                          </SelectItem>
+                        )}
+                        <SelectItem value="subaccount-user">
+                          Sub Account User
+                        </SelectItem>
+                        <SelectItem value="subaccount-guest">
+                          Sub Account Guest
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground">{roleState}</p>
+                  </FormItem>
+                );
+              }}
             />
 
             <Button disabled={submittingUserInfo} type="submit">
-              {submittingUserInfo ? <Loader /> : 'Save User Details'}
+              {submittingUserInfo ? (
+                <Loader className="animate-spin" />
+              ) : (
+                'Save User Details'
+              )}
             </Button>
             {authUserData?.role === 'agency-owner' && (
               <div>
