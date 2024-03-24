@@ -46,6 +46,7 @@ import { Separator } from '../ui/separator';
 import { Switch } from '../ui/switch';
 import { Button } from '../ui/button';
 import { Loader } from 'lucide-react';
+import { FileUpload } from '../global/file-upload';
 type UserDetailsProps = {
   id: string;
   type: 'agency' | 'subaccount';
@@ -110,24 +111,27 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
     }
   }, [userDetails, data]);
 
-  const { execute: updateUser } = useAction(updateUserAction, {
-    onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: 'Update User Information',
-      });
-      setClose();
-      router.refresh();
-    },
+  const { execute: updateUser, status: updateUserInfoStatus } = useAction(
+    updateUserAction,
+    {
+      onSuccess: () => {
+        toast({
+          title: 'Success',
+          description: 'Update User Information',
+        });
+        setClose();
+        router.refresh();
+      },
 
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: 'Oppse!',
-        description: 'Could not update user information',
-      });
-    },
-  });
+      onError: () => {
+        toast({
+          variant: 'destructive',
+          title: 'Oppse!',
+          description: 'Could not update user information',
+        });
+      },
+    }
+  );
 
   const onSubmit = form.handleSubmit((formData) =>
     updateUser({
@@ -162,6 +166,9 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
     });
   };
 
+  const submittingUserInfo =
+    form.formState.isSubmitting || updateUserInfoStatus === 'executing';
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -172,18 +179,18 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4">
             <FormField
-              disabled={form.formState.isSubmitting}
+              disabled={submittingUserInfo}
               control={form.control}
               name="avatarUrl"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Profile picture</FormLabel>
                   <FormControl>
-                    {/* <FileUpload
+                    <FileUpload
                       apiEndpoint="avatar"
-                      value={field.value}
+                      value={field.value ?? undefined}
                       onChange={field.onChange}
-                    /> */}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -191,7 +198,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
             />
 
             <FormField
-              disabled={form.formState.isSubmitting}
+              disabled={submittingUserInfo}
               control={form.control}
               name="name"
               render={({ field }) => (
@@ -205,7 +212,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
               )}
             />
             <FormField
-              disabled={form.formState.isSubmitting}
+              disabled={submittingUserInfo}
               control={form.control}
               name="email"
               render={({ field }) => (
@@ -215,7 +222,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                     <Input
                       readOnly={
                         userDetails?.role === 'agency-owner' ||
-                        form.formState.isSubmitting
+                        submittingUserInfo
                       }
                       placeholder="Email"
                       {...field}
@@ -226,7 +233,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
               )}
             />
             <FormField
-              disabled={form.formState.isSubmitting}
+              disabled={submittingUserInfo}
               control={form.control}
               name="role"
               render={({ field }) => (
@@ -236,8 +243,8 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                     disabled={field.value === 'agency-owner'}
                     onValueChange={(value) => {
                       if (
-                        value === 'SUBACCOUNT_USER' ||
-                        value === 'SUBACCOUNT_GUEST'
+                        value === 'subaccount-user' ||
+                        value === 'subaccount-guest'
                       ) {
                         setRoleState(
                           'You need to have subaccounts to assign Subaccount access to team members.'
@@ -247,7 +254,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                       }
                       field.onChange(value);
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -255,19 +262,17 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="AGENCY_ADMING">
-                        Agency Admin
-                      </SelectItem>
+                      <SelectItem value="agency-admin">Agency Admin</SelectItem>
                       {(data?.user?.role === 'agency-owner' ||
                         userDetails?.role === 'agency-owner') && (
-                        <SelectItem value="AGENCY_OWNER">
+                        <SelectItem value="agency-owner">
                           Agency Owner
                         </SelectItem>
                       )}
-                      <SelectItem value="SUBACCOUNT_USER">
+                      <SelectItem value="subaccount-user">
                         Sub Account User
                       </SelectItem>
-                      <SelectItem value="SUBACCOUNT_GUEST">
+                      <SelectItem value="subaccount-guest">
                         Sub Account Guest
                       </SelectItem>
                     </SelectContent>
@@ -277,8 +282,8 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
               )}
             />
 
-            <Button disabled={form.formState.isSubmitting} type="submit">
-              {form.formState.isSubmitting ? <Loader /> : 'Save User Details'}
+            <Button disabled={submittingUserInfo} type="submit">
+              {submittingUserInfo ? <Loader /> : 'Save User Details'}
             </Button>
             {authUserData?.role === 'agency-owner' && (
               <div>

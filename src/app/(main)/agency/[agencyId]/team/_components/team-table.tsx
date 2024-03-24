@@ -28,6 +28,7 @@ export const TeamTable = ({ teamDataPromise }: TeamTableProps) => {
         dataTable={dataTable}
         columns={columns}
         searchableColumns={searchableColumns}
+        modalChildren={<></>}
         actionButtonText={
           <>
             <Plus size={15} /> Add
