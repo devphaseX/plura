@@ -4,7 +4,6 @@ import {
   AgencyPageQueries,
   AgencyPageQueriesSchema,
 } from '@/lib/validations/queries';
-import { currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 
 const AgencyPage = async ({
@@ -14,7 +13,16 @@ const AgencyPage = async ({
 }) => {
   searchParams = AgencyPageQueriesSchema.parse(searchParams);
   const agencyId = await verifyAndAcceptInvitation();
-  const user = await getUserDetails();
+
+  const user = await getUserDetails().catch((e) => {
+    if ((e as Error | string).toString().match(/unauthorized/i)) {
+      return null;
+    }
+    throw e;
+  });
+
+  if (!user) return redirect('/sign-in?callbackUrl=/agency');
+
   if (agencyId) {
     if (user?.role === 'subaccount-user' || user?.role === 'subaccount-guest') {
       return redirect('/subaccount');
@@ -43,15 +51,11 @@ const AgencyPage = async ({
     }
   }
 
-  const authUser = await currentUser();
-
   return (
     <div className="flex justify-center items-center mt-4">
       <div className="max-w-[850px] border-[1px] p-4 rounded-xl">
         <h1 className="text-4xl">Create An Agency</h1>
-        <AgencyDetails
-          data={{ companyEmail: authUser?.emailAddresses[0].emailAddress }}
-        />
+        <AgencyDetails data={{ companyEmail: user.email }} />
       </div>
     </div>
   );
