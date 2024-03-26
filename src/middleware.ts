@@ -6,7 +6,6 @@ import { authPageRoute } from '../routes';
 
 export default authMiddleware({
   publicRoutes: ['/site', '/api/uploadthing'],
-  async beforeAuth(auth, req) {},
   async afterAuth(auth, req) {
     const url = req.nextUrl;
     const searchParams = url.searchParams.toString();

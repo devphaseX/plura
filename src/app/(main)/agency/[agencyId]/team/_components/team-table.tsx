@@ -7,6 +7,7 @@ import { DataTable } from './data-table';
 import { Table } from '@tanstack/react-table';
 import { GetUserWithAgencyAssetsReturnType } from '@/types';
 import { Plus } from 'lucide-react';
+import SendInvitation from '@/components/forms/send-invitation';
 
 type TeamTableProps = {
   teamDataPromise: Promise<GetUserWithAgencyAssetsReturnType[]>;
@@ -28,7 +29,7 @@ export const TeamTable = ({ teamDataPromise }: TeamTableProps) => {
         dataTable={dataTable}
         columns={columns}
         searchableColumns={searchableColumns}
-        modalChildren={<></>}
+        modalChildren={<SendInvitation />}
         actionButtonText={
           <>
             <Plus size={15} /> Add
