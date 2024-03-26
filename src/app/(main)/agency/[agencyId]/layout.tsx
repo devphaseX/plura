@@ -10,7 +10,7 @@ import UnauthorizedPage from '../unauthorized/page';
 import { Sidebar } from '@/components/sidebar';
 import { BlurPage } from '@/components/global/blur-page';
 import { InfoBar } from '@/components/global/info-bar';
-import { User } from '@/schema';
+import { role, User } from '@/schema';
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -18,11 +18,20 @@ type LayoutProps = {
 };
 
 const Layout = async ({ children, params }: LayoutProps) => {
-  const agencyId = await verifyAndAcceptInvitation();
   const user = await currentUser();
   if (!user) {
     return redirect('/');
   }
+  const agencyId = await verifyAndAcceptInvitation({
+    firstName: user.firstName as string,
+    lastName: user.lastName as string,
+    email: user.emailAddresses[0].emailAddress,
+    userId: user.id,
+    role:
+      (user.privateMetadata.role as (typeof role.enumValues)[number]) ??
+      'subaccount-user',
+    imageUrl: user.imageUrl,
+  });
 
   if (!agencyId) {
     return redirect('/agency');

@@ -71,16 +71,17 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
       onSuccess: () => {
         toast({ title: 'Success', description: 'The request was successfull' });
       },
-      onError: () => {
+      onError: (result) => {
+        console.log(result);
         toast({
           variant: 'destructive',
           title: 'Failed',
           description: 'Could not update permissions',
         });
       },
-      onSettled: () => {
-        router.refresh();
-      },
+      // onSettled: () => {
+      //   router.refresh();
+      // },
     });
 
   useEffect(() => {
@@ -165,7 +166,6 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
       subAccountId,
       access: val,
       type,
-      id: permissionId,
     });
   };
 

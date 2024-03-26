@@ -72,7 +72,7 @@ export const updatePermissionAction = serverAction(
           .insert(permissionTable)
           .values(data)
           .onConflictDoUpdate({
-            target: permissionTable.email,
+            target: [permissionTable.email, permissionTable.subAccountId],
             set: { access: data.access },
             where: inArray(permissionTable.email, [
               data.email ?? null,

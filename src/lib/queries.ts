@@ -1,17 +1,17 @@
 'use server';
 import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from './db';
-import { eq, getTableColumns, or, sql } from 'drizzle-orm';
+import { eq, getTableColumns, inArray, not, or, sql } from 'drizzle-orm';
 import {
   User,
   agencyTable,
   invitationTable,
   notificationTable,
   permissionTable,
+  role,
   subaccountTable,
   userTable,
 } from '@/schema';
-import { redirect } from 'next/navigation';
 import { alias } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { cache } from 'react';
@@ -55,10 +55,14 @@ export const getUserDetails = cache(async (userId?: string) => {
   return userData;
 });
 
-export const verifyAndAcceptInvitation = async () => {
-  const authUser = await currentUser();
-  if (!authUser) return redirect('/sign-in?callbackUrl=/agency');
-
+export const verifyAndAcceptInvitation = async (authUser: {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  role: (typeof role.enumValues)[number];
+  email: string;
+  imageUrl?: null | string;
+}) => {
   const accountInvite = alias(invitationTable, 'account_invite');
 
   const [invite] = await db
@@ -78,9 +82,7 @@ export const verifyAndAcceptInvitation = async () => {
     .from(accountInvite)
     .leftJoin(userTable, eq(userTable.agencyId, accountInvite.agencyId))
     .innerJoin(agencyTable, eq(agencyTable.id, accountInvite.agencyId))
-    .where(
-      sql`${accountInvite.email} = ${authUser.emailAddresses[0].emailAddress}`
-    );
+    .where(sql`${accountInvite.email} = ${authUser.email}`);
 
   let user: User | null = null;
 
@@ -91,10 +93,10 @@ export const verifyAndAcceptInvitation = async () => {
           agencyId: invite.agencyId,
           user: {
             email: invite.email,
-            userId: authUser.id,
+            userId: authUser.userId,
             agencyId: invite.agencyId,
             name: `${authUser.firstName} ${authUser.lastName}`,
-            avatarUrl: authUser.imageUrl,
+            avatarUrl: authUser.imageUrl ?? null,
             role: invite.role,
           },
         });
@@ -116,7 +118,7 @@ export const verifyAndAcceptInvitation = async () => {
           agencyId: invite.agencyId,
           description: 'Joined',
         });
-        await clerkClient.users.updateUserMetadata(authUser.id, {
+        await clerkClient.users.updateUserMetadata(authUser.userId, {
           privateMetadata: {
             role: joinedUser?.role ?? 'subaccount-user',
           },
@@ -133,7 +135,7 @@ export const verifyAndAcceptInvitation = async () => {
       await db
         .select()
         .from(userTable)
-        .where(eq(userTable.email, authUser.emailAddresses[0].emailAddress))
+        .where(eq(userTable.email, authUser.email))
     ).at(0) ??
     null;
 

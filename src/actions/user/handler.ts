@@ -1,16 +1,15 @@
 'use server';
 import { serverAction } from '@/lib/server-action';
 import { UserSchema } from './input';
-import { auth, clerkClient, currentUser } from '@clerk/nextjs';
+import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
+import { userTable } from '@/schema';
+import { eq, inArray, sql } from 'drizzle-orm';
 import {
-  agencyTable,
-  permissionTable,
-  subaccountTable,
-  userTable,
-} from '@/schema';
-import { eq, or, sql } from 'drizzle-orm';
-import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
+  createActivityLogNotification,
+  getUserDetails,
+  updateUser,
+} from '@/lib/queries';
 
 export const initUser = serverAction(
   UserSchema.partial({ firstName: true, lastName: true, userId: true }),
@@ -65,77 +64,97 @@ export const updateUserAction = serverAction(
   UserSchema.omit({ userId: true }).required({ id: true }),
   async (updateUserForm) => {
     const authUser = await getUserDetails();
+
     const updateUserDetails = await getUserDetails(updateUserForm.id);
 
     if (!authUser) {
       throw new Error('Auth account not fully initial');
     }
 
+    if (authUser.agencyId !== updateUserDetails?.agencyId) {
+      throw new Error('You are not permitted to perform this action');
+    }
+
     if (!updateUserDetails) {
       throw new Error('User not found');
     }
 
-    const updatedUser = await db.transaction(async () => {
-      const { agencyId, ...excludeAgencyIdUpdateUserForm } = updateUserForm;
-
-      const allowedPermissions = authUser.permissions.filter(
-        ({ email, access }) => authUser.email === email && access
-      );
-
-      const [updatedUser] = await db
-        .update(userTable)
-        .set({
-          ...excludeAgencyIdUpdateUserForm,
-          role: sql`
-            case
-              when ${userTable.role} = 'agency-owner' then ${userTable.role}
-              else coalesce(${updateUserForm.role ?? null}, ${userTable.role})
-            end
-        `,
-        })
-        .where(
-          sql`
-        ${userTable.id} = ${updateUserDetails.id} and (
-            ${authUser.id} = ${updateUserDetails.id} or exists (
-                select * from ${permissionTable}
-                inner join ${subaccountTable} on ${subaccountTable.id} = ${permissionTable.subAccountId}
-                where ${permissionTable.email} = ${updateUserDetails.email} 
-                and ${subaccountTable.agencyId} = ${authUser.agencyId} and ${authUser.role} in (
-                  'agency-admin', 'agency-owner'
-                )
-            )
-        )
-        `
-        )
-        .returning();
-
-      await Promise.all(
-        allowedPermissions.map((permission) => {
-          if (!permission.access) return null;
-
-          return createActivityLogNotification({
-            subaccountId: permission.subAccountId,
-            description: `Updated ${authUser.name} information`,
-          });
-        })
-      );
-
-      return updatedUser;
-    });
-
-    if (!updatedUser) {
-      throw new Error('User not found');
-    }
-
     try {
-      await clerkClient.users.updateUserMetadata(updatedUser.userId, {
-        privateMetadata: {
-          role: updatedUser.role ?? 'subaccount-user',
-        },
+      const updatedUser = await db.transaction(async () => {
+        const { agencyId, ...excludeAgencyIdUpdateUserForm } = updateUserForm;
+
+        const allowedPermissions = authUser.permissions.filter(
+          ({ email, access }) => authUser.email === email && access
+        );
+
+        const [updatedUser] = await db
+          .update(userTable)
+          .set({
+            ...excludeAgencyIdUpdateUserForm,
+            role: sql`
+              case
+                when ${userTable.role} = 'agency-owner' then ${userTable.role}
+                else coalesce(${updateUserForm.role ?? null}, ${userTable.role})
+              end
+          `,
+          })
+          .where(
+            sql`
+          ${userTable.id} = ${updateUserDetails.id} and (
+              ${authUser.id} = ${updateUserDetails.id} or ${authUser.id} in (
+                 select ${userTable.id} from ${userTable}
+                 where ${userTable.agencyId} = ${
+              updateUserDetails.agencyId
+            } and ${inArray(userTable.role, ['agency-admin', 'agency-owner'])}
+              )
+          )
+          `
+          )
+          .returning();
+
+        const [firstName, lastName] = updateUser.name.split(/\s+/);
+
+        await Promise.all([
+          updateUserDetails.name !== updatedUser.name &&
+            clerkClient.users.updateUser(updatedUser.userId, {
+              firstName,
+              lastName,
+            }),
+          updateUserDetails.role !== updatedUser.role &&
+            clerkClient.users.updateUserMetadata(updatedUser.userId, {
+              privateMetadata: {
+                role: updatedUser.role ?? 'subaccount-user',
+              },
+            }),
+        ]);
+
+        if (updateUserDetails.role !== updatedUser.role) {
+          await clerkClient.users.updateUserMetadata(updatedUser.userId, {
+            privateMetadata: {
+              role: updatedUser.role ?? 'subaccount-user',
+            },
+          });
+        }
+
+        await Promise.all(
+          allowedPermissions.map((permission) => {
+            if (!permission.access) return null;
+
+            return createActivityLogNotification({
+              subaccountId: permission.subAccountId,
+              description: `Updated ${authUser.name} information`,
+            });
+          })
+        );
+
+        return updatedUser;
       });
-      return { data: updatedUser };
+
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
     } catch (e) {
-      console.log(e);
+      console.log('[UPDATE USER]', e);
       throw new Error('An error occurred while updating user info');
     }
   }

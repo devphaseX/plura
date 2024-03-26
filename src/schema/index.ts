@@ -9,6 +9,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -92,8 +93,9 @@ export const permissionTable = pgTable(
       .notNull(),
     access: boolean('access'),
   },
-  ({ email }) => ({
+  ({ email, subAccountId }) => ({
     emailIdx: index('email_idx').on(email),
+    unq: unique('unq').on(email, subAccountId),
   })
 );
 

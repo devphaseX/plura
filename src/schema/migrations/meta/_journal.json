@@ -15,6 +15,13 @@
       "when": 1710744872291,
       "tag": "0001_zippy_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1711461246539,
+      "tag": "0002_flippant_photon",
+      "breakpoints": true
     }
   ]
 }
