@@ -19,7 +19,7 @@ export const protectServerAction = createSafeActionClient({
       throw new ActionError('Authenication required');
     }
 
-    return DataTransfer;
+    return userDetails;
   },
 });
 
@@ -39,6 +39,6 @@ export const agencyAdminAndOwnerServerAction = createSafeActionClient({
       throw new ActionError('Insufficient permission');
     }
 
-    return DataTransfer;
+    return userDetails;
   },
 });

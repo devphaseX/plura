@@ -15,6 +15,7 @@ import { redirect } from 'next/navigation';
 import { alias } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { cache } from 'react';
+import { ActionError } from './utils';
 
 export const getUserDetails = cache(async (userId?: string) => {
   if (!userId) {
@@ -55,8 +56,8 @@ export const getUserDetails = cache(async (userId?: string) => {
 });
 
 export const verifyAndAcceptInvitation = async () => {
-  const user = await currentUser();
-  if (!user) return redirect('/sign-in');
+  const authUser = await currentUser();
+  if (!authUser) return redirect('/sign-in?callbackUrl=/agency');
 
   const accountInvite = alias(invitationTable, 'account_invite');
 
@@ -78,50 +79,65 @@ export const verifyAndAcceptInvitation = async () => {
     .leftJoin(userTable, eq(userTable.agencyId, accountInvite.agencyId))
     .innerJoin(agencyTable, eq(agencyTable.id, accountInvite.agencyId))
     .where(
-      sql`${accountInvite.status} = 'pending'
-      and ${accountInvite.email} = ${user.emailAddresses[0].emailAddress}`
+      sql`${accountInvite.email} = ${authUser.emailAddresses[0].emailAddress}`
     );
 
+  let user: User | null = null;
+
   if (invite) {
-    if (invite.alreadyJoined) {
-      await db.delete(invitationTable).where(eq(invitationTable.id, invite.id));
-    } else {
-      await db.transaction(async () => {
+    if (invite.status === 'pending') {
+      user = await db.transaction(async () => {
         const joinedUser = await createTeamUser({
           agencyId: invite.agencyId,
           user: {
             email: invite.email,
-            userId: user.id,
+            userId: authUser.id,
             agencyId: invite.agencyId,
-            name: `${user.firstName} ${user.lastName}`,
-            avatarUrl: user.imageUrl,
+            name: `${authUser.firstName} ${authUser.lastName}`,
+            avatarUrl: authUser.imageUrl,
+            role: invite.role,
           },
         });
+
+        if (!joinedUser) {
+          throw new ActionError(
+            'An error occurred while creating user account'
+          );
+        }
+
+        await db
+          .update(invitationTable)
+          .set({ status: 'accepted' })
+          .where(
+            sql`${invitationTable.email} = ${joinedUser.email} and ${invitationTable.id} = ${invite.id}`
+          );
+
         await createActivityLogNotification({
           agencyId: invite.agencyId,
           description: 'Joined',
         });
-        if (joinedUser) {
-          await clerkClient.users.updateUserMetadata(user.id, {
-            privateMetadata: {
-              role: joinedUser?.role ?? 'subaccount-user',
-            },
-          });
-          await db
-            .delete(invitationTable)
-            .where(eq(invitationTable.id, invite.id));
-          return joinedUser.agencyId;
-        }
-        return null;
+        await clerkClient.users.updateUserMetadata(authUser.id, {
+          privateMetadata: {
+            role: joinedUser?.role ?? 'subaccount-user',
+          },
+        });
+
+        return joinedUser;
       });
     }
   }
-  const [registeredUser] = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.email, user.emailAddresses[0].emailAddress));
 
-  return registeredUser?.agencyId ?? null;
+  user =
+    user ??
+    (
+      await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, authUser.emailAddresses[0].emailAddress))
+    ).at(0) ??
+    null;
+
+  return user?.agencyId;
 };
 
 type NewCreateUserFormData = Omit<
