@@ -46,7 +46,10 @@ const TeamPage = async ({ params }: TeamPageProps) => {
           />
         }
       >
-        <TeamTable teamDataPromise={getUserWithAgencyAssets(params.agencyId)} />
+        <TeamTable
+          teamDataPromise={getUserWithAgencyAssets(params.agencyId)}
+          authUser={authUser}
+        />
       </Suspense>
     </div>
   );

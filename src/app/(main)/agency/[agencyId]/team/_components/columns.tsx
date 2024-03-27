@@ -2,8 +2,10 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import type {
+  AuthUserWithAgencySidebarOptionsSubAccounts,
   DataTableSearchableColumn,
   GetUserWithAgencyAssetsReturnType,
+  UserWithPermissionsAndSubAccounts,
 } from '@/types';
 import clsx from 'clsx';
 import Image from 'next/image';
@@ -33,7 +35,7 @@ import { useModal } from '@/providers/modal-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { removeUserFromAgency, getUser } from '@/lib/queries';
+import { removeUserFromAgency, getUser, getUserDetails } from '@/lib/queries';
 import { User } from '@/schema';
 import { CustomModal } from '@/components/global/custom-modal';
 import { UserDetails } from '@/components/forms/user-details';
@@ -138,19 +140,30 @@ export const columns: ColumnDef<TeamData>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const rowData = row.original;
-
-      return <CellActions rowData={rowData} />;
+      return (
+        <CellActions
+          rowData={rowData}
+          authUser={
+            (
+              table.options.meta as unknown as {
+                authUser: AuthUserWithAgencySidebarOptionsSubAccounts;
+              }
+            ).authUser
+          }
+        />
+      );
     },
   },
 ];
 
 interface CellActionsProps {
   rowData: TeamData;
+  authUser: AuthUserWithAgencySidebarOptionsSubAccounts;
 }
 
-const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
+const CellActions: React.FC<CellActionsProps> = ({ rowData, authUser }) => {
   const { data, setOpen } = useModal();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -191,7 +204,7 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
                   />
                 </CustomModal>,
                 async () => {
-                  return { user: await getUser(rowData?.id) };
+                  return { user: await getUserDetails(rowData.id), authUser };
                 }
               );
             }}

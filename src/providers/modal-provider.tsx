@@ -1,12 +1,20 @@
 'use client';
 
-import type { Agency, User } from '@/schema';
+import type { Agency } from '@/schema';
+import {
+  AuthUserWithAgencySidebarOptionsSubAccounts,
+  UserWithPermissionsAndSubAccounts,
+} from '@/types';
 import { createContext, useContext, useEffect, useState } from 'react';
 type ModalProviderProps = {
   children: React.ReactNode;
 };
 
-export type ModalData = { user?: User; agency?: Agency };
+export type ModalData = {
+  user?: UserWithPermissionsAndSubAccounts;
+  authUser?: AuthUserWithAgencySidebarOptionsSubAccounts;
+  agency?: Agency;
+};
 
 type ModalContextProps = {
   data?: ModalData;

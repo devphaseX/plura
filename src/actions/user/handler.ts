@@ -83,10 +83,6 @@ export const updateUserAction = serverAction(
       const updatedUser = await db.transaction(async () => {
         const { agencyId, ...excludeAgencyIdUpdateUserForm } = updateUserForm;
 
-        const allowedPermissions = authUser.permissions.filter(
-          ({ email, access }) => authUser.email === email && access
-        );
-
         const [updatedUser] = await db
           .update(userTable)
           .set({
@@ -137,14 +133,12 @@ export const updateUserAction = serverAction(
         }
 
         await Promise.all(
-          allowedPermissions.map((permission) => {
-            if (!permission.access) return null;
-
-            return createActivityLogNotification({
-              subaccountId: permission.subAccountId,
+          updateUserDetails.permissions?.map((permission) =>
+            createActivityLogNotification({
               description: `Updated ${authUser.name} information`,
-            });
-          })
+              subaccountId: permission.subAccountId,
+            })
+          )
         );
 
         return updatedUser;

@@ -52,6 +52,27 @@ export const getUserDetails = cache(async (userId?: string) => {
     },
   });
 
+  if (userData?.agency) {
+    const userSubaccountPermissions = db
+      .$with('user_subaccount_permissions')
+      .as(
+        db
+          .select()
+          .from(permissionTable)
+          .where(eq(permissionTable.email, userData.email))
+      );
+
+    userData.permissions = await db
+      .with(userSubaccountPermissions)
+      .select()
+      .from(userSubaccountPermissions)
+      .where(
+        userData.role === 'agency-owner' || userData.role === 'agency-admin'
+          ? sql`1=1`
+          : eq(userSubaccountPermissions.access, true)
+      );
+  }
+
   return userData;
 });
 

@@ -67,7 +67,7 @@ export const updatePermissionAction = serverAction(
         );
       }
 
-      const updatedPermission = await db.transaction(async () => {
+      const updatedPermissions = await db.transaction(async () => {
         const [updatedPermission] = await db
           .insert(permissionTable)
           .values(data)
@@ -87,11 +87,28 @@ export const updatePermissionAction = serverAction(
           agencyId,
         });
 
-        return updatedPermission;
+        const userSubaccountPermissions = db
+          .$with('user_subaccount_permissions')
+          .as(
+            db
+              .select()
+              .from(permissionTable)
+              .where(eq(permissionTable.email, updatedPermission.email))
+          );
+
+        return await db
+          .with(userSubaccountPermissions)
+          .select()
+          .from(userSubaccountPermissions)
+          .where(
+            authUser.role === 'agency-owner' || authUser.role === 'agency-admin'
+              ? sql`1=1`
+              : eq(userSubaccountPermissions.access, true)
+          );
       });
 
       return {
-        data: updatedPermission,
+        data: updatedPermissions,
       };
     } catch (e) {
       console.log(e);

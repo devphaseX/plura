@@ -10,6 +10,7 @@ import {
   type SortingState,
   type VisibilityState,
   RowSelectionState,
+  TableMeta,
 } from '@tanstack/react-table';
 
 import type {
@@ -57,6 +58,7 @@ type UseDataTableProps<TData, TValue> = {
    * @example filterableColumns={[{ id: "status", title: "Status", options: ["todo", "in-progress", "done", "canceled"]}]}
    */
   filterableColumns?: DataTableFilterableColumn<TData>[];
+  meta?: TableMeta<TData>;
 };
 
 const schema = z.object({
@@ -71,6 +73,7 @@ export function useDataTable<TData, TValue>({
   pageCount,
   filterableColumns,
   searchableColumns,
+  meta,
 }: UseDataTableProps<TData, TValue>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -263,6 +266,7 @@ export function useDataTable<TData, TValue>({
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
+    meta,
   });
 
   return { dataTable };

@@ -13,7 +13,7 @@ import { getUserDetails, getUserPermissions } from '@/lib/queries';
 import { useForm } from 'react-hook-form';
 import { UserInput, UserSchema } from '@/actions/user/input';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAction } from 'next-safe-action/hooks';
+import { useAction, useOptimisticAction } from 'next-safe-action/hooks';
 import { updatePermissionAction } from '@/actions/permission/handler';
 import { updateUserAction } from '@/actions/user/handler';
 
@@ -51,14 +51,15 @@ type UserDetailsProps = {
   id: string;
   type: 'agency' | 'subaccount';
   subaccounts?: Array<Subaccount>;
-  userDetails?: Partial<User>;
+  userDetails?: AuthUserWithAgencySidebarOptionsSubAccounts;
   permissions?: Permission[];
 };
 
 const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
-  const [subaccountPermissions, setSubaccountPermission] =
-    useState<UserWithPermissionsAndSubAccounts | null>(null);
   const { data, setClose } = useModal();
+  const [subaccountPermissions, setSubaccountPermission] = useState<
+    Permission[]
+  >(data?.user?.permissions ?? []);
   const [authUserData, setAuthUserData] =
     useState<AuthUserWithAgencySidebarOptionsSubAccounts | null>();
   const [roleState, setRoleState] = useState('');
@@ -66,52 +67,71 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const { toast } = useToast();
   const router = useRouter();
 
-  const { execute: updatePermission, status: updatePermissionStatus } =
-    useAction(updatePermissionAction, {
-      onSuccess: () => {
-        toast({ title: 'Success', description: 'The request was successfull' });
+  const {
+    optimisticData,
+    status: updatePermissionStatus,
+    execute: updatePermission,
+  } = useOptimisticAction(
+    updatePermissionAction,
+    { data: subaccountPermissions },
+    (state, current) => {
+      const accessMap: Record<string, Permission | null> = Object.fromEntries(
+        state?.data?.map((p) => [p.subAccountId, p])
+      );
+
+      accessMap[current.subAccountId as string] = current.access
+        ? (current as Permission)
+        : null;
+
+      return {
+        data: Object.values(accessMap).filter(
+          (p): p is Permission => p !== null
+        ),
+      };
+    },
+    {
+      onSuccess: ({ data }) => {
+        router.refresh();
+        setSubaccountPermission(data);
+        toast({ title: 'Success', description: 'permission updated' });
       },
-      onError: (result) => {
-        console.log(result);
+
+      onError: () => {
         toast({
           variant: 'destructive',
           title: 'Failed',
           description: 'Could not update permissions',
         });
       },
-      // onSettled: () => {
-      //   router.refresh();
-      // },
-    });
+    }
+  );
 
   useEffect(() => {
-    if (data?.user) {
-      const fetchDetails = async () => {
-        const response = await getUserDetails();
-        if (response) setAuthUserData(response);
-      };
-
-      fetchDetails();
+    if (data?.authUser) {
+      setAuthUserData(data.authUser);
+      setSubaccountPermission(data?.user?.permissions ?? []);
     }
-  }, [data]);
+  }, [data?.user, data?.authUser]);
+
+  useEffect(() => {
+    if (userDetails) {
+      setAuthUserData(userDetails);
+    }
+  }, [userDetails]);
 
   const loadingPermissions = updatePermissionStatus === 'executing';
 
   const form = useForm<UserInput>({
     resolver: zodResolver(UserSchema),
     mode: 'onChange',
-    defaultValues: userDetails ?? data?.user,
+    defaultValues: data?.user,
   });
 
   useEffect(() => {
     if (data?.user) {
       form.reset(data.user);
     }
-
-    if (userDetails) {
-      form.reset(userDetails);
-    }
-  }, [userDetails, data]);
+  }, [data]);
 
   const { execute: updateUser, status: updateUserInfoStatus } = useAction(
     updateUserAction,
@@ -138,24 +158,13 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const onSubmit = form.handleSubmit((formData) =>
     updateUser({
       ...formData,
-      id: (data?.user?.id ?? userDetails?.id) as string,
+      id: data?.user?.id as string,
     })
   );
 
-  useEffect(() => {
-    if (!data?.user) return;
-    const getPermission = async () => {
-      const permissions = await getUserPermissions(data?.user?.id!);
-      permissions && setSubaccountPermission(permissions);
-    };
-
-    getPermission();
-  }, [data]);
-
   const onToggleUpdatePermission = async (
     subAccountId: string,
-    val: boolean,
-    permissionId: string | undefined
+    val: boolean
   ) => {
     if (!data?.user?.email) return;
 
@@ -296,7 +305,8 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                 'Save User Details'
               )}
             </Button>
-            {authUserData?.role === 'agency-owner' && (
+            {(authUserData?.role === 'agency-owner' ||
+              authUserData?.role === 'agency-admin') && (
               <div>
                 <Separator className="my-4" />
                 <FormLabel> User Permissions</FormLabel>
@@ -308,7 +318,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                 <div className="flex flex-col gap-4">
                   {subaccounts?.map((subaccount) => {
                     const subAccountPermissionsDetails =
-                      subaccountPermissions?.permissions?.find(
+                      optimisticData.data?.find(
                         (p) => p.subAccountId === subaccount.id
                       );
 
@@ -326,11 +336,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                             subAccountPermissionsDetails?.access ?? false
                           }
                           onCheckedChange={(permission) => {
-                            onToggleUpdatePermission(
-                              subaccount.id,
-                              permission,
-                              data?.user?.email as string
-                            );
+                            onToggleUpdatePermission(subaccount.id, permission);
                           }}
                         />
                       </div>
