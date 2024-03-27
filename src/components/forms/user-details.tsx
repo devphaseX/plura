@@ -1,15 +1,11 @@
 'use client';
 
-import { Permission, Subaccount, User } from '@/schema';
+import { Permission, Subaccount } from '@/schema';
 import { useEffect, useState } from 'react';
-import {
-  AuthUserWithAgencySidebarOptionsSubAccounts,
-  UserWithPermissionsAndSubAccounts,
-} from '../../types';
+import { AuthUserWithAgencySidebarOptionsSubAccounts } from '../../types';
 import { useModal } from '@/providers/modal-provider';
 import { useToast } from '../ui/use-toast';
 import { useRouter } from 'next/navigation';
-import { getUserDetails, getUserPermissions } from '@/lib/queries';
 import { useForm } from 'react-hook-form';
 import { UserInput, UserSchema } from '@/actions/user/input';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,12 +52,16 @@ type UserDetailsProps = {
 };
 
 const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
+  console.log({ userDetails });
   const { data, setClose } = useModal();
   const [subaccountPermissions, setSubaccountPermission] = useState<
     Permission[]
   >(data?.user?.permissions ?? []);
   const [authUserData, setAuthUserData] =
-    useState<AuthUserWithAgencySidebarOptionsSubAccounts | null>();
+    useState<AuthUserWithAgencySidebarOptionsSubAccounts | null>(
+      userDetails ?? null
+    );
+
   const [roleState, setRoleState] = useState('');
 
   const { toast } = useToast();
@@ -124,7 +124,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const form = useForm<UserInput>({
     resolver: zodResolver(UserSchema),
     mode: 'onChange',
-    defaultValues: data?.user,
+    defaultValues: data?.user ?? userDetails,
   });
 
   useEffect(() => {
@@ -136,7 +136,8 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const { execute: updateUser, status: updateUserInfoStatus } = useAction(
     updateUserAction,
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
+        form.reset(data);
         toast({
           title: 'Success',
           description: 'Update User Information',
@@ -158,7 +159,7 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
   const onSubmit = form.handleSubmit((formData) =>
     updateUser({
       ...formData,
-      id: data?.user?.id as string,
+      id: (data?.user?.id ?? userDetails?.id) as string,
     })
   );
 
@@ -317,10 +318,9 @@ const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
                 </FormDescription>
                 <div className="flex flex-col gap-4">
                   {subaccounts?.map((subaccount) => {
-                    const subAccountPermissionsDetails =
-                      optimisticData.data?.find(
-                        (p) => p.subAccountId === subaccount.id
-                      );
+                    const subAccountPermissionsDetails = (
+                      userDetails?.permissions ?? optimisticData.data
+                    )?.find((p) => p.subAccountId === subaccount.id);
 
                     return (
                       <div

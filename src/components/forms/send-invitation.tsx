@@ -52,7 +52,7 @@ const SendInvitation: React.FC = () => {
       onSuccess: () => {
         toast({
           title: 'Success',
-          description: 'Created and sent invitation',
+          description: 'Invitation sent to the user',
         });
         setClose();
       },

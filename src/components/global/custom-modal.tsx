@@ -25,7 +25,7 @@ const CustomModal = ({
   return (
     <Dialog open={opened || defaultOpen} onOpenChange={setClose}>
       <DialogContent className="p-0">
-        <ScrollArea className="md:h-[700px] p-6">
+        <ScrollArea className="md:max-h-[700px] p-6">
           <DialogHeader className="pt-8 text-left">
             <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
             <DialogDescription>{subheading}</DialogDescription>

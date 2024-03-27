@@ -1,9 +1,12 @@
+import { AgencyDetails } from '@/components/forms/agency-details';
 import { UserDetails } from '@/components/forms/user-details';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getUserDetails } from '@/lib/queries';
 import {
   AgencyPageParams,
   AgencyPageParamsSchema,
 } from '@/lib/validations/queries';
+import { Agency } from '@/schema';
 import { currentUser } from '@clerk/nextjs';
 import { notFound, redirect } from 'next/navigation';
 
@@ -36,11 +39,11 @@ const SettingsPage = async ({ params }: SettingsPageProps) => {
 
   return (
     <div className="flex lg:flex-row flex-col gap-4">
-      <AgencyDetails data={userDetails.agency} />
+      <AgencyDetails data={userDetails.agency as Agency} />
       <UserDetails
         type="agency"
         id={params.agencyId}
-        subaccount={userDetails.agency?.subaccounts}
+        subaccounts={userDetails.agency?.subaccounts}
         userDetails={userDetails}
       />
     </div>

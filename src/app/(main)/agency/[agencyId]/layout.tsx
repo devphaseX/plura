@@ -46,9 +46,9 @@ const Layout = async ({ children, params }: LayoutProps) => {
 
   let currentNotifications = await getNotificationWithUser(agencyId);
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="h-screen">
       <Sidebar id={params.agencyId} type="agency" />
-      <div className="md:pl-[300px]">
+      <div className="md:pl-[300px] h-full flex flex-col">
         <InfoBar
           notifications={currentNotifications}
           role={
@@ -56,7 +56,7 @@ const Layout = async ({ children, params }: LayoutProps) => {
             (await getUserDetails())?.role
           }
         />
-        <div className="relative">
+        <div className="relative flex-1">
           <BlurPage>{children}</BlurPage>
         </div>
       </div>

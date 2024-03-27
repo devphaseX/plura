@@ -1,5 +1,5 @@
 'use server';
-import { serverAction } from '@/lib/server-action';
+import { protectServerAction, serverAction } from '@/lib/server-action';
 import { UserSchema } from './input';
 import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
@@ -60,11 +60,9 @@ export const initUser = serverAction(
   }
 );
 
-export const updateUserAction = serverAction(
+export const updateUserAction = protectServerAction(
   UserSchema.omit({ userId: true }).required({ id: true }),
-  async (updateUserForm) => {
-    const authUser = await getUserDetails();
-
+  async (updateUserForm, authUser) => {
     const updateUserDetails = await getUserDetails(updateUserForm.id);
 
     if (!authUser) {
@@ -147,6 +145,10 @@ export const updateUserAction = serverAction(
       if (!updatedUser) {
         throw new Error('User not found');
       }
+
+      return {
+        data: await getUserDetails(updatedUser.id),
+      };
     } catch (e) {
       console.log('[UPDATE USER]', e);
       throw new Error('An error occurred while updating user info');

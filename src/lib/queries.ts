@@ -196,10 +196,10 @@ type CreateActivityLogNotificationOption = {
 export const createActivityLogNotification = async (
   option: CreateActivityLogNotificationOption
 ) => {
-  const user = await currentUser();
+  const logByUser = await getUserDetails();
 
-  const [logByUser] = await db.select().from(userTable).where(sql`
-      ${userTable.id} = (
+  /* 
+  ${userTable.id} = (
         (select ${userTable.id} from ${subaccountTable}
         inner join ${agencyTable} on ${agencyTable.id} = ${
     subaccountTable.agencyId
@@ -216,7 +216,7 @@ export const createActivityLogNotification = async (
   }
         )
       )
-  `);
+  */
 
   if (!logByUser) {
     console.error('Could not find user');

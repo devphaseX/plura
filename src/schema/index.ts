@@ -118,7 +118,7 @@ export type Permission = typeof permissionTable.$inferSelect;
 export const agencyTable = pgTable('agency', {
   id: uuid('id').primaryKey().defaultRandom(),
   connectedAccountId: text('connected_account_id'),
-  customerId: text('customer_id').notNull(),
+  customerId: text('customer_id'),
   name: varchar('name', { length: 256 }).notNull(),
   agencyLogo: varchar('agency_logo', { length: 256 }).notNull(),
   companyEmail: varchar('company_email', { length: 256 }).notNull().unique(),
