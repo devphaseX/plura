@@ -505,9 +505,11 @@ export const subAccountSidebarOptionTable = pgTable(
     name: varchar('name', { length: 256 }).notNull(),
     link: text('content').default('#'),
     icon: icon('icon').default('info').notNull(),
-    subaccountId: uuid('subaccount_id').references(() => subaccountTable.id, {
-      onDelete: 'cascade',
-    }),
+    subaccountId: uuid('subaccount_id')
+      .references(() => subaccountTable.id, {
+        onDelete: 'cascade',
+      })
+      .notNull(),
     ...timeStamps,
   }
 );

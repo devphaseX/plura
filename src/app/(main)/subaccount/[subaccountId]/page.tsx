@@ -1,5 +1,5 @@
-const SubaccountMainPage = () => {
-  return <div>Subaccount</div>;
+const SubaccountPage = () => {
+  return <div></div>;
 };
 
-export default SubaccountMainPage;
+export default SubaccountPage;

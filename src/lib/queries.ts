@@ -1,7 +1,7 @@
 'use server';
 import { clerkClient, currentUser } from '@clerk/nextjs';
 import { db } from './db';
-import { eq, getTableColumns, inArray, not, or, sql } from 'drizzle-orm';
+import { asc, eq, getTableColumns, inArray, not, or, sql } from 'drizzle-orm';
 import {
   User,
   agencyTable,
@@ -9,6 +9,7 @@ import {
   notificationTable,
   permissionTable,
   role,
+  subAccountSidebarOptionTable,
   subaccountTable,
   userTable,
 } from '@/schema';
@@ -45,6 +46,7 @@ export const getUserDetails = cache(async (userId?: string) => {
             with: {
               sidebarOptions: true,
             },
+            orderBy: asc(sql`created_at`),
           },
         },
       },
@@ -321,13 +323,23 @@ export const updateUser = async (
   return updateUser;
 };
 
-export const getNotificationWithUser = (agencyId: string) => {
+export const getNotificationWithUser = (
+  agencyId: string,
+  subaccountId?: string | null
+) => {
+  subaccountId = subaccountId ?? null;
   try {
     return db.query.notificationTable.findMany({
       with: {
         user: true,
       },
-      where: eq(notificationTable.agencyId, agencyId),
+      where: sql`${eq(notificationTable.agencyId, agencyId)} and 
+      case 
+       when ${subaccountId}::uuid is not null then ${subaccountId}::uuid = ${
+        notificationTable.subaccountId
+      }
+       else 1=1
+      end`,
     });
   } catch (e) {
     console.log(e);

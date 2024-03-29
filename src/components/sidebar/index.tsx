@@ -13,6 +13,8 @@ export const Sidebar = async ({ id, type }: SidebarProps) => {
 
   if (!user.agency) return;
 
+  console.log(user.agency.subaccounts, id);
+
   const details =
     type === 'agency'
       ? user.agency

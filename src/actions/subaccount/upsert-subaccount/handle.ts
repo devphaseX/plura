@@ -2,16 +2,14 @@
 
 import { serverAction } from '@/lib/server-action';
 import { CreateSubaccountSchema } from './input';
-import { z } from 'zod';
 import { db } from '@/lib/db';
 import {
   permissionTable,
   pipelineTable,
   subAccountSidebarOptionTable,
   subaccountTable,
-  userTable,
 } from '@/schema';
-import { eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { createActivityLogNotification, getUserDetails } from '@/lib/queries';
 import { revalidatePath } from 'next/cache';
 
@@ -51,44 +49,53 @@ export const upsertSubaccountAction = serverAction(
 
           db.insert(subAccountSidebarOptionTable).values([
             {
-              name: 'Launchpad',
-              icon: 'clipboardIcon',
-              link: `/subaccount/${subaccount.id}/launchpad`,
-            },
-            {
-              name: 'Settings',
-              icon: 'settings',
-              link: `/subaccount/${subaccount.id}/settings`,
-            },
-            {
-              name: 'Funnels',
-              icon: 'pipelines',
-              link: `/subaccount/${subaccount.id}/funnels`,
-            },
-            {
               name: 'Media',
               icon: 'database',
               link: `/subaccount/${subaccount.id}/media`,
+              subaccountId: subaccount.id,
+            },
+            {
+              name: 'Launchpad',
+              icon: 'clipboardIcon',
+              link: `/subaccount/${subaccount.id}/launchpad`,
+              subaccountId: subaccount.id,
             },
             {
               name: 'Automations',
               icon: 'chip',
               link: `/subaccount/${subaccount.id}/automations`,
+              subaccountId: subaccount.id,
             },
             {
               name: 'Pipelines',
               icon: 'flag',
               link: `/subaccount/${subaccount.id}/pipelines`,
-            },
-            {
-              name: 'Contacts',
-              icon: 'person',
-              link: `/subaccount/${subaccount.id}/contacts`,
+              subaccountId: subaccount.id,
             },
             {
               name: 'Dashboard',
               icon: 'category',
               link: `/subaccount/${subaccount.id}`,
+              subaccountId: subaccount.id,
+            },
+            {
+              name: 'Settings',
+              icon: 'settings',
+              link: `/subaccount/${subaccount.id}/settings`,
+              subaccountId: subaccount.id,
+            },
+            {
+              name: 'Funnels',
+              icon: 'pipelines',
+              link: `/subaccount/${subaccount.id}/funnels`,
+              subaccountId: subaccount.id,
+            },
+
+            {
+              name: 'Contacts',
+              icon: 'person',
+              link: `/subaccount/${subaccount.id}/contacts`,
+              subaccountId: subaccount.id,
             },
           ]),
         ]);
