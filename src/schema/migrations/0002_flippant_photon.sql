@@ -1,1 +1,0 @@
-ALTER TABLE "permission" ADD CONSTRAINT "unq" UNIQUE("email","sub_account_id");

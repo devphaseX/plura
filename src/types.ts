@@ -2,6 +2,7 @@ import {
   type getUserDetails,
   type getUserWithAgencyAssets,
   type getUserPermissions,
+  type getMedia,
 } from '@/lib/queries';
 import { User, Notification } from '@/schema';
 
@@ -46,3 +47,5 @@ export interface DataTableFilterableColumn<TData>
 export type GetUserWithAgencyAssetsReturnType = Awaited<
   ReturnType<typeof getUserWithAgencyAssets>
 >[number];
+
+export type GetMediaFiles = NonNullable<Awaited<ReturnType<typeof getMedia>>>;

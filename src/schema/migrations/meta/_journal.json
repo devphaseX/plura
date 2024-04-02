@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1709814323165,
-      "tag": "0000_careful_hitman",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1710744872291,
-      "tag": "0001_zippy_betty_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1711461246539,
-      "tag": "0002_flippant_photon",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1711517062332,
-      "tag": "0003_tense_epoch",
+      "when": 1711882175597,
+      "tag": "0000_light_lightspeed",
       "breakpoints": true
     }
   ]

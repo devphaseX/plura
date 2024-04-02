@@ -22,7 +22,6 @@ export const DeleteButton = ({ subaccountId }: DeleteButtonProps) => {
     removeSubaccountAction,
     {
       onSuccess: ({ data }) => {
-        console.log({ data });
         toast({
           title: 'Subaccount',
           description: `Deleted a subaccount | ${data.name}`,

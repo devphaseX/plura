@@ -6,11 +6,14 @@ import {
   User,
   agencyTable,
   invitationTable,
+  laneTable,
   notificationTable,
   permissionTable,
+  pipelineTable,
   role,
   subAccountSidebarOptionTable,
   subaccountTable,
+  ticketTable,
   userTable,
 } from '@/schema';
 import { alias } from 'drizzle-orm/pg-core';
@@ -199,27 +202,6 @@ export const createActivityLogNotification = async (
   option: CreateActivityLogNotificationOption
 ) => {
   const logByUser = await getUserDetails();
-
-  /* 
-  ${userTable.id} = (
-        (select ${userTable.id} from ${subaccountTable}
-        inner join ${agencyTable} on ${agencyTable.id} = ${
-    subaccountTable.agencyId
-  }
-        inner join ${userTable} on ${userTable.agencyId} = ${agencyTable.id}
-        where ${subaccountTable.id} = ${option.subaccountId ?? null}
-        limit 1
-        )
-        union
-        (
-          select ${userTable.id} from ${userTable} 
-          where ${user?.emailAddresses[0].emailAddress ?? null} = ${
-    userTable.email
-  }
-        )
-      )
-  */
-
   if (!logByUser) {
     console.error('Could not find user');
     return;
@@ -402,4 +384,131 @@ export const removeUserFromAgency = async (userId: string) => {
       .set({ agencyId: null, role: 'subaccount-guest' })
       .returning()
   ).at(0);
+};
+
+export const getMedia = async (subaccountId: string) => {
+  const user = await getUserDetails();
+
+  const mediaFiles = await db.query.subaccountTable.findFirst({
+    where: sql`${subaccountTable.id} = ${subaccountId} and ${subaccountId} in (
+        ${sql.raw(
+          `(${(user?.permissions ?? [])
+            .map(({ subAccountId }) => `'${subAccountId}'`)
+            .join(',')})`
+        )}
+    )`,
+
+    with: {
+      media: true,
+    },
+  });
+
+  return mediaFiles;
+};
+
+export const getSubaccountPipelines = async (subaccountId: string) => {
+  const user = await getUserDetails();
+  if (!user) return null;
+
+  const pipelines = await db
+    .select()
+    .from(pipelineTable)
+    .where(
+      sql`${pipelineTable.subAccountId} = ${subaccountId} and ${
+        pipelineTable.subAccountId
+      } in ${sql.raw(
+        `(${(user?.permissions ?? [])
+          .map(({ subAccountId }) => `'${subAccountId}'`)
+          .join(',')})`
+      )}`
+    );
+
+  return pipelines;
+};
+
+export const getSubaccountPipeline = async (id: string) => {
+  const user = await getUserDetails();
+  if (!user) return null;
+
+  const [pipeline] = await db
+    .select()
+    .from(pipelineTable)
+    .where(
+      sql`(${pipelineTable.subAccountId} = ${id} or ${
+        pipelineTable.id
+      } = ${id}) and ${pipelineTable.subAccountId} in ${sql.raw(
+        `(${(user?.permissions ?? [])
+          .map(({ subAccountId }) => `'${subAccountId}'`)
+          .join(',')})`
+      )}`
+    )
+    .limit(1);
+
+  return pipeline;
+};
+
+export const getLanesWithTicketTags = async (pipelineId: string) => {
+  const user = await getUserDetails();
+  if (!user) return null;
+
+  const lanes = await db.query.laneTable.findMany({
+    where: sql`
+      ${pipelineId} = ${laneTable.pipelineId} and (
+        select subaccount.id from ${pipelineTable}
+        inner join ${subaccountTable} on pipeline.subaccount_id = subaccount.id
+        where pipeline.id = ${pipelineId}
+      ) in ${sql.raw(
+        `(${(user?.permissions ?? [])
+          .map(({ subAccountId }) => `'${subAccountId}'`)
+          .join(',')})`
+      )}
+    `,
+
+    with: {
+      tickets: {
+        with: {
+          assignedUser: true,
+          customers: true,
+          tagTickets: {
+            with: {
+              ticket: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return lanes;
+};
+
+export const checkUserSubaccountAccess = async ({
+  userId,
+  subaccountId,
+}: {
+  userId: string;
+  subaccountId?: string;
+}) => {
+  const userPermissions = db.$with('user_permissions').as(
+    db.select().from(permissionTable).where(sql`${permissionTable.email} = (
+      select ${userTable.email} from ${userTable}
+      where ${userTable.id} = ${userId}
+    ) and ${permissionTable.access} = true`)
+  );
+
+  const [allowAccess] = await db
+    .with(userPermissions)
+    .select()
+    .from(subaccountTable).where(sql`${subaccountTable.id} in  (
+      select ${userPermissions.subAccountId} from ${userPermissions} 
+    ) and 
+    case
+      when ${subaccountId ?? null}::uuid is not null then ${subaccountId} = ${
+    subaccountTable.id
+  }
+      else true
+    end
+    `);
+
+  return !!allowAccess;
 };

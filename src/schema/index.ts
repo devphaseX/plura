@@ -7,12 +7,14 @@ import {
   json,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { TypeOf } from 'zod';
 
 export const icon = pgEnum('icon', [
   'settings',
@@ -202,7 +204,7 @@ export const tagTableRelations = relations(tagTable, ({ one, many }) => ({
     fields: [tagTable.subAccountId],
     references: [subaccountTable.id],
   }),
-  // tickets: many(ticketTable),
+  tagTickets: many(tagTicketTable),
 }));
 
 export const pipelineTable = pgTable('pipeline', {
@@ -213,6 +215,8 @@ export const pipelineTable = pgTable('pipeline', {
     .notNull(),
   ...timeStamps,
 });
+
+export type Pipeline = typeof pipelineTable.$inferSelect;
 
 export const pipelineTableRelations = relations(
   pipelineTable,
@@ -274,8 +278,36 @@ export const ticketTableRelations = relations(ticketTable, ({ one, many }) => ({
     fields: [ticketTable.customerId],
     references: [contactTable.id],
   }),
+
+  tagTickets: many(tagTicketTable),
 }));
 
+export const tagTicketTable = pgTable(
+  'tag_ticket',
+  {
+    tagId: uuid('tag_id')
+      .references(() => tagTable.id)
+      .notNull(),
+    ticketId: uuid('ticket_id').notNull(),
+    // .references(() => ticketTable.id),
+    ...timestamp,
+  },
+  ({ tagId, ticketId }) => ({
+    tagTicketUnqiue: primaryKey({ columns: [tagId, ticketId] }),
+  })
+);
+
+export const tagTicketRelations = relations(tagTicketTable, ({ one }) => ({
+  tag: one(tagTable, {
+    references: [tagTable.id],
+    fields: [tagTicketTable.tagId],
+  }),
+
+  ticket: one(ticketTable, {
+    fields: [tagTicketTable.ticketId],
+    references: [ticketTable.id],
+  }),
+}));
 export const triggerType = pgEnum('trigger_type', ['contact-form']);
 
 export const triggerTable = pgTable('trigger', {
@@ -393,9 +425,9 @@ export const contactTableRelation = relations(
 export const mediaTable = pgTable('media', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
-  email: varchar('email', { length: 256 }).notNull(),
+  email: varchar('email', { length: 256 }),
   type: varchar('type', { length: 256 }),
-  line: varchar('line', { length: 256 }).unique().notNull(),
+  link: varchar('link', { length: 256 }).unique().notNull(),
   subaccountId: uuid('subaccount_id')
     .references(() => subaccountTable.id, { onDelete: 'cascade' })
     .notNull(),
@@ -409,6 +441,7 @@ export const mediaTableRelation = relations(mediaTable, ({ one, many }) => ({
   }),
 }));
 
+export type Media = typeof mediaTable.$inferSelect;
 export const funnelTable = pgTable('funnel', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),

@@ -22,7 +22,7 @@ const SubaccountLayout = async ({
 }: SubaccountLayoutProps) => {
   const authUser = await currentUser();
   if (!authUser) {
-    return redirect('/agency');
+    return redirect('/subaccount');
   }
 
   const agencyId = await verifyAndAcceptInvitation({
@@ -72,9 +72,7 @@ const SubaccountLayout = async ({
           notifications={currentNotifications}
           role={authUser.privateMetadata.role as User['role']}
         />
-        <div className="relative flex-1">
-          <BlurPage>{children}</BlurPage>
-        </div>
+        <div className="relative flex-1">{children}</div>
       </div>
     </div>
   );

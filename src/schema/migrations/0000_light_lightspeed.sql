@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "agency_sidebar_option" (
 CREATE TABLE IF NOT EXISTS "agency" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"connected_account_id" text,
-	"customer_id" text NOT NULL,
+	"customer_id" text,
 	"name" varchar(256) NOT NULL,
 	"agency_logo" varchar(256) NOT NULL,
 	"company_email" varchar(256) NOT NULL,
@@ -168,13 +168,13 @@ CREATE TABLE IF NOT EXISTS "lane" (
 CREATE TABLE IF NOT EXISTS "media" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(256) NOT NULL,
-	"email" varchar(256) NOT NULL,
+	"email" varchar(256),
 	"type" varchar(256),
-	"line" varchar(256) NOT NULL,
+	"link" varchar(256) NOT NULL,
 	"subaccount_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
-	CONSTRAINT "media_line_unique" UNIQUE("line")
+	CONSTRAINT "media_link_unique" UNIQUE("link")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "notification" (
@@ -191,7 +191,8 @@ CREATE TABLE IF NOT EXISTS "permission" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" varchar(256) NOT NULL,
 	"sub_account_id" uuid NOT NULL,
-	"access" boolean
+	"access" boolean,
+	CONSTRAINT "unq" UNIQUE("email","sub_account_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "pipeline" (
@@ -207,7 +208,7 @@ CREATE TABLE IF NOT EXISTS "subaccount_sidebar_option" (
 	"name" varchar(256) NOT NULL,
 	"content" text DEFAULT '#',
 	"icon" "icon" DEFAULT 'info' NOT NULL,
-	"subaccount_id" uuid,
+	"subaccount_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -225,7 +226,8 @@ CREATE TABLE IF NOT EXISTS "subaccount" (
 	"zip_code" varchar(256) NOT NULL,
 	"state" varchar(256) NOT NULL,
 	"country" varchar(256) NOT NULL,
-	"agency_id" uuid NOT NULL
+	"agency_id" uuid NOT NULL,
+	CONSTRAINT "subaccount_company_email_unique" UNIQUE("company_email")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "subscription" (
@@ -247,6 +249,12 @@ CREATE TABLE IF NOT EXISTS "tag" (
 	"subaccount_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "tag_ticket" (
+	"tag_id" uuid NOT NULL,
+	"ticket_id" uuid NOT NULL,
+	CONSTRAINT "tag_ticket_tag_id_ticket_id_pk" PRIMARY KEY("tag_id","ticket_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "ticket" (
@@ -412,6 +420,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "tag" ADD CONSTRAINT "tag_subaccount_id_subaccount_id_fk" FOREIGN KEY ("subaccount_id") REFERENCES "subaccount"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "tag_ticket" ADD CONSTRAINT "tag_ticket_tag_id_tag_id_fk" FOREIGN KEY ("tag_id") REFERENCES "tag"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

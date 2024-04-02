@@ -19,6 +19,7 @@ import { Switch } from '../ui/switch';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { ModeToggle } from './mode-toggle';
+import { ScrollArea } from '../ui/scroll-area';
 
 type InfoBarProps = {
   notifications: NonNullable<NotificationWithUser>[];
@@ -79,48 +80,50 @@ export const InfoBar = ({
                   )}
                 </SheetDescription>
               </SheetHeader>
-              <div>
-                {currentNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="flex flex-col gap-y-2 mb-2 text-ellipsis"
-                  >
-                    <div className="flex gap-2">
-                      <Avatar>
-                        <AvatarImage
-                          src={notification.user.avatarUrl ?? undefined}
-                          alt="profile picture"
-                        />
-                        <AvatarFallback className="bg-primary">
-                          {notification.user.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <p>
-                          <span className="font-bold">
-                            {notification.message.split('|').at(0)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {notification.message.split('|').at(1)}
-                          </span>
-                          <span className="font-bold">
-                            {notification.message.split('|').at(2)}
-                          </span>
-                        </p>
-                        <small className="text-xs text-muted-foreground">
-                          {new Date(
-                            notification.createdAt as Date
-                          ).toLocaleString()}
-                        </small>
+              <ScrollArea>
+                <div>
+                  {currentNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className="flex flex-col gap-y-2 mb-2 text-ellipsis"
+                    >
+                      <div className="flex gap-2">
+                        <Avatar>
+                          <AvatarImage
+                            src={notification.user.avatarUrl ?? undefined}
+                            alt="profile picture"
+                          />
+                          <AvatarFallback className="bg-primary">
+                            {notification.user.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <p>
+                            <span className="font-bold">
+                              {notification.message.split('|').at(0)}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {notification.message.split('|').at(1)}
+                            </span>
+                            <span className="font-bold">
+                              {notification.message.split('|').at(2)}
+                            </span>
+                          </p>
+                          <small className="text-xs text-muted-foreground">
+                            {new Date(
+                              notification.createdAt as Date
+                            ).toLocaleString()}
+                          </small>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
-                <div className="flex items-center justify-center  last:hidden">
-                  You have no notifications
+                  <div className="flex items-center justify-center  last:hidden">
+                    You have no notifications
+                  </div>
                 </div>
-              </div>
+              </ScrollArea>
             </SheetContent>
           </Sheet>
           <ModeToggle />

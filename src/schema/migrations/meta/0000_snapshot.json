@@ -1,5 +1,5 @@
 {
-  "id": "b7edbfe1-e326-48b1-87a7-85b45b582665",
+  "id": "f0b7d240-4c77-46bd-9f21-9da5b96bac71",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -228,7 +228,7 @@
           "name": "customer_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "name": {
           "name": "name",
@@ -932,7 +932,7 @@
           "name": "email",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "type": {
           "name": "type",
@@ -940,8 +940,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "line": {
-          "name": "line",
+        "link": {
+          "name": "link",
           "type": "varchar(256)",
           "primaryKey": false,
           "notNull": true
@@ -985,11 +985,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "media_line_unique": {
-          "name": "media_line_unique",
+        "media_link_unique": {
+          "name": "media_link_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "line"
+            "link"
           ]
         }
       }
@@ -1144,7 +1144,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "unq": {
+          "name": "unq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email",
+            "sub_account_id"
+          ]
+        }
+      }
     },
     "pipeline": {
       "name": "pipeline",
@@ -1238,7 +1247,7 @@
           "name": "subaccount_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -1376,7 +1385,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "subaccount_company_email_unique": {
+          "name": "subaccount_company_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "company_email"
+          ]
+        }
+      }
     },
     "subscription": {
       "name": "subscription",
@@ -1519,6 +1536,50 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "tag_ticket": {
+      "name": "tag_ticket",
+      "schema": "",
+      "columns": {
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ticket_id": {
+          "name": "ticket_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tag_ticket_tag_id_tag_id_fk": {
+          "name": "tag_ticket_tag_id_tag_id_fk",
+          "tableFrom": "tag_ticket",
+          "tableTo": "tag",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tag_ticket_tag_id_ticket_id_pk": {
+          "name": "tag_ticket_tag_id_ticket_id_pk",
+          "columns": [
+            "tag_id",
+            "ticket_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "ticket": {

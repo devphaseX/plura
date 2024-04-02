@@ -52,7 +52,6 @@ type UserDetailsProps = {
 };
 
 const UserDetails = ({ userDetails, type, subaccounts }: UserDetailsProps) => {
-  console.log({ userDetails });
   const { data, setClose } = useModal();
   const [subaccountPermissions, setSubaccountPermission] = useState<
     Permission[]
