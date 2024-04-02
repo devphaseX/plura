@@ -11,6 +11,9 @@ import {
 import { redirect } from 'next/navigation';
 import { PipelineInfoBar } from './_components/pipeline-info-bar';
 import { PipelineSettings } from './_components/pipeline-settings';
+import { PipelineView } from './_components/pipeline-view';
+import { updateLaneOrderAction } from '@/actions/lane/handler';
+import { updateTicketOrdersAction } from '@/actions/ticket/handler';
 
 type PipelinePageProps = {
   params: PipelineWithIdParams;
@@ -43,7 +46,14 @@ const PipelinePage = async ({ params }: PipelinePageProps) => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </div>
       </TabsList>
-      <TabsContent value="view">Pipeline view</TabsContent>
+      <TabsContent value="view">
+        <PipelineView
+          activePipeline={pipelineDetails}
+          subaccountId={params.subaccountId}
+          lanes={lanes ?? []}
+          pipelineDetails={ownedPipelines ?? []}
+        />
+      </TabsContent>
       <TabsContent value="settings">
         <PipelineSettings
           pipelineId={pipelineDetails.id}

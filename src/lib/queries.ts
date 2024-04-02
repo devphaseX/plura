@@ -477,6 +477,7 @@ export const getLanesWithTicketTags = async (pipelineId: string) => {
         },
       },
     },
+    orderBy: asc(laneTable.order),
   });
 
   return lanes;
@@ -503,9 +504,9 @@ export const checkUserSubaccountAccess = async ({
       select ${userPermissions.subAccountId} from ${userPermissions} 
     ) and 
     case
-      when ${subaccountId ?? null}::uuid is not null then ${subaccountId} = ${
-    subaccountTable.id
-  }
+      when ${subaccountId ?? null}::uuid is not null then ${
+    subaccountId ?? null
+  } = ${subaccountTable.id}
       else true
     end
     `);

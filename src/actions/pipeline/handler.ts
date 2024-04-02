@@ -61,6 +61,7 @@ export const deletePipelineAction = protectServerAction(
   z.object({ id: z.string().uuid() }),
   async ({ id }, user) => {
     try {
+      console.log({ user });
       const permitted = await checkUserSubaccountAccess({
         userId: user.id,
       });
@@ -69,6 +70,7 @@ export const deletePipelineAction = protectServerAction(
         throw new ActionError('Unauthorized');
       }
 
+      console.log({ permitted });
       const removedPipeline = await db.transaction(async () => {
         const [removedPipeline] = await db
           .delete(pipelineTable)

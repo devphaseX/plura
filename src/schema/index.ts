@@ -247,6 +247,8 @@ export const laneTableRelations = relations(laneTable, ({ one, many }) => ({
   tickets: many(ticketTable),
 }));
 
+export type Lane = typeof laneTable.$inferSelect;
+
 export const ticketTable = pgTable('ticket', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
@@ -265,6 +267,7 @@ export const ticketTable = pgTable('ticket', {
   ...timeStamps,
 });
 
+export type Ticket = typeof ticketTable.$inferSelect;
 export const ticketTableRelations = relations(ticketTable, ({ one, many }) => ({
   lane: one(laneTable, {
     fields: [ticketTable.laneId],

@@ -3,6 +3,7 @@ import {
   type getUserWithAgencyAssets,
   type getUserPermissions,
   type getMedia,
+  getLanesWithTicketTags,
 } from '@/lib/queries';
 import { User, Notification } from '@/schema';
 
@@ -49,3 +50,7 @@ export type GetUserWithAgencyAssetsReturnType = Awaited<
 >[number];
 
 export type GetMediaFiles = NonNullable<Awaited<ReturnType<typeof getMedia>>>;
+
+export type LaneWithTicketTags = NonNullable<
+  Awaited<ReturnType<typeof getLanesWithTicketTags>>
+>[number];
