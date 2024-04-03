@@ -5,6 +5,7 @@ import { asc, eq, getTableColumns, inArray, not, or, sql } from 'drizzle-orm';
 import {
   User,
   agencyTable,
+  contactTable,
   invitationTable,
   laneTable,
   notificationTable,
@@ -17,7 +18,7 @@ import {
   userTable,
 } from '@/schema';
 import { alias } from 'drizzle-orm/pg-core';
-import { z } from 'zod';
+import { z, string } from 'zod';
 import { cache } from 'react';
 import { ActionError } from './utils';
 
@@ -512,4 +513,33 @@ export const checkUserSubaccountAccess = async ({
     `);
 
   return !!allowAccess;
+};
+
+export const getSubaccountTeamMembers = async (subaccountId: string) => {
+  const user = await getUserDetails();
+  if (!user) return null;
+
+  const permitted = await checkUserSubaccountAccess({
+    userId: user.id,
+    subaccountId,
+  });
+
+  if (!permitted) return null;
+
+  return db.select().from(userTable).where(sql`
+    ${userTable.email} in (
+      select ${permissionTable.email} from ${permissionTable}
+      where ${permissionTable.subAccountId} = ${subaccountId} and ${eq(
+    permissionTable.access,
+    true
+  )}
+    ) and ${eq(userTable.role, 'subaccount-user')}
+`);
+};
+
+export const searchContacts = async (searchTerms: string) => {
+  return db
+    .select()
+    .from(contactTable)
+    .where(sql`${contactTable.name} ilike %${searchTerms}%`);
 };

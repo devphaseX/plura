@@ -207,6 +207,7 @@ export const tagTableRelations = relations(tagTable, ({ one, many }) => ({
   tagTickets: many(tagTicketTable),
 }));
 
+export type Tag = typeof tagTable.$inferSelect;
 export const pipelineTable = pgTable('pipeline', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 256 }).notNull(),
@@ -424,6 +425,8 @@ export const contactTableRelation = relations(
     tickets: many(ticketTable),
   })
 );
+
+export type Contact = typeof contactTable.$inferSelect;
 
 export const mediaTable = pgTable('media', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -16,14 +16,11 @@ const AgencyPage = async ({
 }) => {
   searchParams = AgencyPageQueriesSchema.parse(searchParams);
 
-  const [authUser, userDetails] = await Promise.all([
-    currentUser(),
-    getUserDetails(),
-  ]);
-
+  const authUser = await currentUser();
   if (!authUser) {
     return redirect('/sign-in?callbackUrl=/agency');
   }
+  const userDetails = await getUserDetails();
 
   const agencyId = await verifyAndAcceptInvitation({
     firstName: authUser.firstName as string,

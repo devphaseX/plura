@@ -32,6 +32,7 @@ const PipelinePage = async ({ params }: PipelinePageProps) => {
 
   const ownedPipelines = await getSubaccountPipelines(params.subaccountId);
   const lanes = await getLanesWithTicketTags(params.pipelineId);
+  const allPipelineTickets = lanes?.flatMap((lane) => lane.tickets) ?? [];
 
   return (
     <Tabs defaultValue="view" className="w-full">
@@ -48,6 +49,7 @@ const PipelinePage = async ({ params }: PipelinePageProps) => {
       </TabsList>
       <TabsContent value="view">
         <PipelineView
+          pipelineTickets={allPipelineTickets}
           activePipeline={pipelineDetails}
           subaccountId={params.subaccountId}
           lanes={lanes ?? []}

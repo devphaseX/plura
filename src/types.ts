@@ -54,3 +54,5 @@ export type GetMediaFiles = NonNullable<Awaited<ReturnType<typeof getMedia>>>;
 export type LaneWithTicketTags = NonNullable<
   Awaited<ReturnType<typeof getLanesWithTicketTags>>
 >[number];
+
+export type TicketWithTags = LaneWithTicketTags['tickets'];

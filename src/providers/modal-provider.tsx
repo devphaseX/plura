@@ -3,6 +3,7 @@
 import type { Agency } from '@/schema';
 import {
   AuthUserWithAgencySidebarOptionsSubAccounts,
+  TicketWithTags,
   UserWithPermissionsAndSubAccounts,
 } from '@/types';
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ export type ModalData = {
   user?: UserWithPermissionsAndSubAccounts;
   authUser?: AuthUserWithAgencySidebarOptionsSubAccounts;
   agency?: Agency;
+  ticket?: TicketWithTags[number];
 };
 
 type ModalContextProps = {
