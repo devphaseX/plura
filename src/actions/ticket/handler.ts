@@ -8,6 +8,7 @@ import {
   contactTable,
   laneTable,
   pipelineTable,
+  subaccountTable,
   Tag,
   tagTable,
   tagTicketTable,
@@ -155,6 +156,89 @@ export const upsertTicketAction = protectServerAction(
       return { data: ticket };
     } catch (e) {
       console.log('[UPSERT TICKET]', e);
+      if (Object(e) instanceof ActionError) {
+        throw e;
+      }
+      throw new ActionError('Oops. An error occurred while updating record.');
+    }
+  }
+);
+
+export const deleteTicketAction = protectServerAction(
+  TicketSchema.pick({ id: true, laneId: true }).required({
+    id: true,
+    laneId: true,
+  }),
+  async (formData, user) => {
+    try {
+      const deletedTicket = await db.transaction(async () => {
+        const permittedSubaccounts = db.$with('permitted_subaccounts').as(
+          db
+            .select()
+            .from(subaccountTable)
+            .where(
+              sql`${subaccountTable.id} in ${sql.raw(
+                `(${(user?.permissions ?? [])
+                  .map(({ subAccountId }) => `'${subAccountId}'`)
+                  .join(',')})`
+              )}`
+            )
+        );
+
+        const accessLanes = db.$with('access_lanes').as(
+          db.select().from(laneTable).where(sql`${laneTable.pipelineId} in 
+                (select ${pipelineTable.id} from ${pipelineTable}
+                where ${pipelineTable.subAccountId} in (
+                    select ${permittedSubaccounts.id} from ${permittedSubaccounts}
+                  )
+                ) and ${laneTable.id} = ${formData.laneId}
+            `)
+        );
+
+        const [deletedTicket] = await db
+          .with(permittedSubaccounts, accessLanes)
+          .delete(ticketTable)
+
+          .where(
+            sql`${ticketTable.id} = ${formData.id} and ${ticketTable.laneId} in (
+          select ${accessLanes.id} from ${accessLanes}
+        )`
+          )
+          .returning();
+
+        record: if (deletedTicket) {
+          const ticketPipelineSubaccountId = (
+            await db
+              .select({ ...getTableColumns(subaccountTable) })
+              .from(subaccountTable)
+              .innerJoin(
+                pipelineTable,
+                eq(subaccountTable.id, pipelineTable.subAccountId)
+              )
+              .innerJoin(laneTable, eq(laneTable.pipelineId, pipelineTable.id))
+              .where(sql`${laneTable.id} =  ${deletedTicket.laneId}`)
+          ).at(0)?.id;
+
+          if (!ticketPipelineSubaccountId) {
+            break record;
+          }
+
+          await createActivityLogNotification({
+            subaccountId: ticketPipelineSubaccountId,
+            description: `Deleted Ticket | ${deletedTicket.name}`,
+          });
+        }
+
+        return deletedTicket;
+      });
+
+      if (!deletedTicket) {
+        throw new ActionError('Ticket not found');
+      }
+
+      return { data: deletedTicket };
+    } catch (e) {
+      console.log('[DELETE TICKET]', e);
       if (Object(e) instanceof ActionError) {
         throw e;
       }

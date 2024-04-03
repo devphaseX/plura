@@ -36,7 +36,7 @@ import { useAction } from 'next-safe-action/hooks';
 import { deleteLaneAction } from '@/actions/lane/handler';
 import { useToast } from '@/components/ui/use-toast';
 // import TicketForm from '@/components/forms/ticket-form';
-// import PipelineTicket from './pipeline-ticket';
+import { PipelineTicket } from './pipeline-ticket';
 
 interface PipelaneLaneProps {
   setAllTickets: Dispatch<SetStateAction<TicketWithTags>>;
@@ -192,15 +192,13 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
                           className="mt-2"
                         >
                           {tickets.map((ticket, index) => (
-                            <div key={ticket.id}>{ticket.name}</div>
-                            // <PipelineTicket
-                            //   allTickets={allTickets}
-                            //   setAllTickets={setAllTickets}
-                            //   subaccountId={subaccountId}
-                            //   ticket={ticket}
-                            //   key={ticket.id.toString()}
-                            //   index={index}
-                            // />
+                            <PipelineTicket
+                              ticket={ticket}
+                              index={index}
+                              pipelineTickets={allTickets}
+                              subaccountId={subaccountId}
+                              setAllTickets={setAllTickets}
+                            />
                           ))}
                           {provided.placeholder}
                         </div>

@@ -472,7 +472,7 @@ export const getLanesWithTicketTags = async (pipelineId: string) => {
           customers: true,
           tagTickets: {
             with: {
-              ticket: true,
+              tag: true,
             },
           },
         },
